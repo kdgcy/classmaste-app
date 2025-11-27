@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.ViewModelProvider // Import for the factory type
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -13,7 +14,7 @@ import com.kd.classmate.dashboard.Dashboard
 import com.kd.classmate.utils.Routes
 
 @Composable
-fun AppNavigation(){
+fun AppNavigation(factory: ViewModelProvider.Factory){ // Accept the factory here
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Routes.dashboard,
         enterTransition = {
@@ -40,7 +41,8 @@ fun AppNavigation(){
                 animationSpec = tween(300)
             ) + fadeOut(tween(300))
         }
-        ) {
-        composable(Routes.dashboard) { Dashboard(navController) }
+    ) {
+        // Pass the factory down to the Dashboard composable
+        composable(Routes.dashboard) { Dashboard(navController, factory) }
     }
 }
