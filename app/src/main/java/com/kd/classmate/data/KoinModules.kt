@@ -1,12 +1,10 @@
-// File: KoinModules.kt
-package com.kd.classmate.data // Put it with your data classes for easy access
+package com.kd.classmate.data
 
-import com.kd.classmate.data.AppDatabase.Companion.getDatabase
 import com.kd.classmate.dashboard.DashboardViewModel
+import com.kd.classmate.data.AppDatabase.Companion.getDatabase
 import com.kd.classmate.subtasks.TaskDetailsViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
-import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
 
 val appModule = module {

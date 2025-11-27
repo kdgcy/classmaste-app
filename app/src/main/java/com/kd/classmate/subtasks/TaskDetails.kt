@@ -7,21 +7,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.runtime.Composable
-import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.NavController
-import androidx.compose.material3.Text
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel // NEW: Import viewModel
-import androidx.compose.runtime.collectAsState // NEW: Import collectAsState
-import com.kd.classmate.data.TaskRepository
+import androidx.navigation.NavController
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -31,7 +29,6 @@ fun TaskDetails(
     navController: NavController,
     taskId: Int
 ){
-    // 3. Initialize the ViewModel
     val viewModel: TaskDetailsViewModel = koinViewModel(
         parameters = { parametersOf(taskId) }
     )
@@ -39,22 +36,26 @@ fun TaskDetails(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                // 4. Use the title from the ViewModel's state
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = uiState.title, // DISPLAY THE DYNAMIC TITLE
+                        text = uiState.title,
                         fontWeight = FontWeight.SemiBold
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
+                    IconButton( onClick = { navController.navigateUp() }) {
                         Icon(imageVector = Icons.Filled.ArrowBackIosNew, contentDescription = null)
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {  }) {
+                        Icon(imageVector = Icons.Filled.MoreVert, contentDescription = null)
                     }
                 }
             )
         }
-    ) {paddingValues ->
+    ) { paddingValues ->
         LazyColumn(modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
