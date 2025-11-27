@@ -34,13 +34,14 @@ import androidx.navigation.NavController
 import com.kd.classmate.components.AddTaskDialog
 import com.kd.classmate.components.EditTaskDialog
 import com.kd.classmate.utils.Routes
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) {
+fun Dashboard(navController: NavController) {
 
     // Initialize the ViewModel and collect state
-    val viewModel: DashboardViewModel = viewModel(factory = factory)
+    val viewModel: DashboardViewModel = koinViewModel()
     val uiState = viewModel.uiState.collectAsState().value
 
     // --- 1. Add Task Dialog ---

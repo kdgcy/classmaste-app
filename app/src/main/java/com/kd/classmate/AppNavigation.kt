@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.ViewModelProvider // Import for the factory type
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -17,7 +16,7 @@ import com.kd.classmate.subtasks.TaskDetails
 import com.kd.classmate.utils.Routes
 
 @Composable
-fun AppNavigation(factory: ViewModelProvider.Factory){ // Accept the factory here
+fun AppNavigation(){
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Routes.dashboard,
         enterTransition = {
@@ -45,21 +44,21 @@ fun AppNavigation(factory: ViewModelProvider.Factory){ // Accept the factory her
             ) + fadeOut(tween(300))
         }
     ) {
-        // Pass the factory down to the Dashboard composable
-        composable(Routes.dashboard) { Dashboard(navController, factory) }
-        // NEW: TaskDetails Composable
+        // Dashboard
+        composable(Routes.dashboard) { Dashboard(navController) } // REMOVE: , factory)
+
+        // TaskDetails
         composable(
             route = Routes.taskDetails,
             arguments = listOf(navArgument("taskId") { type = NavType.IntType })
         ) { backStackEntry ->
-            // Extract the taskId argument
             val taskId = backStackEntry.arguments?.getInt("taskId")
             if (taskId != null) {
-                // Pass the taskId and factory to the TaskDetails screen
+                // TaskDetails now only needs navController and taskId
                 TaskDetails(
                     navController = navController,
-                    taskId = taskId,
-                    factory = factory
+                    taskId = taskId
+                    // REMOVE: factory = factory
                 )
             }
         }

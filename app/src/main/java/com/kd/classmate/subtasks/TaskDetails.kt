@@ -22,27 +22,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel // NEW: Import viewModel
 import androidx.compose.runtime.collectAsState // NEW: Import collectAsState
 import com.kd.classmate.data.TaskRepository
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskDetails(
     navController: NavController,
-    taskId: Int,
-    // Note: The factory parameter is the DashboardViewModelFactory from MainActivity
-    factory: ViewModelProvider.Factory // This factory holds the TaskRepository
+    taskId: Int
 ){
-    // 1. Get the TaskRepository from the factory (assumes the factory is DashboardViewModelFactory)
-    // This is a common but slightly impure way to reuse the repository dependency.
-    // In a real app, you would typically use an injection framework like Hilt/Koin.
-    val repository = (factory as? com.kd.classmate.dashboard.DashboardViewModelFactory)?.repository
-        ?: throw IllegalStateException("Factory must be DashboardViewModelFactory to extract repository")
-
-
-    // 2. Create the specialized factory for this ViewModel
-    val detailsFactory = TaskDetailsViewModelFactory(repository, taskId)
-
     // 3. Initialize the ViewModel
-    val viewModel: TaskDetailsViewModel = viewModel(factory = detailsFactory)
+    val viewModel: TaskDetailsViewModel = koinViewModel(
+        parameters = { parametersOf(taskId) }
+    )
     val uiState = viewModel.uiState.collectAsState().value
 
     Scaffold(
