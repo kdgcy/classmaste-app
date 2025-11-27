@@ -3,7 +3,6 @@ package com.kd.classmate.dashboard
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
@@ -11,8 +10,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect // NEW
+import androidx.compose.ui.focus.FocusRequester // NEW
+import androidx.compose.ui.focus.focusRequester // NEW
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardActions // NEW
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController // NEW
 
 @Composable
 fun AddTaskDialog(
@@ -22,20 +28,44 @@ fun AddTaskDialog(
     onDismiss: () -> Unit,
     onAddClick: () -> Unit
 ) {
+    // 1. Setup Focus Requester and Keyboard Controller
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val isAddButtonEnabled = taskTitle.isNotBlank()
+
+    // 2. Request focus when the dialog first appears
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+        // Optional: Ensure keyboard is explicitly shown if needed
+        keyboardController?.show()
+    }
+
     AlertDialog(
-        onDismissRequest = onDismiss, // Dismiss when clicking outside
+        onDismissRequest = onDismiss,
         title = {
             Text(text = "Add New Task")
         },
         text = {
             Column {
-                // OutlinedTextField for task title input
                 OutlinedTextField(
                     value = taskTitle,
                     onValueChange = onTitleChange,
                     label = { Text("Task Title") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
+                    // 3. Attach Focus Requester
+                    modifier = Modifier.focusRequester(focusRequester),
+
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+
+                    // 4. Handle "Done" button press on the keyboard
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            if (isAddButtonEnabled) {
+                                onAddClick()
+                                keyboardController?.hide() // Hide keyboard after submission
+                            }
+                        }
+                    )
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -47,8 +77,7 @@ fun AddTaskDialog(
         confirmButton = {
             Button(
                 onClick = onAddClick,
-                // Disable button if title is empty
-                enabled = taskTitle.isNotBlank()
+                enabled = isAddButtonEnabled // Use the local variable
             ) {
                 Text("Add")
             }
