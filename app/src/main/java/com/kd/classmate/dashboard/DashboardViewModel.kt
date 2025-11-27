@@ -14,15 +14,17 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 
-// Define the UI state
+// Define the UI state (UPDATED)
 data class DashboardUiState(
     val taskList: List<Task> = emptyList(),
     val isAddDialogVisible: Boolean = false,
     val newTaskTitleInput: String = "",
-    val selectedDate: LocalDate? = null, // Holds the selected date
-    val selectedTime: LocalTime? = null, // Holds the selected time
-    val isDatePickerVisible: Boolean = false, // Controls DatePickerDialog visibility
-    val isTimePickerVisible: Boolean = false, // Controls TimePickerDialog visibility
+    val selectedDate: LocalDate? = null,
+    val selectedTime: LocalTime? = null,
+    val isDatePickerVisible: Boolean = false,
+    val isTimePickerVisible: Boolean = false,
+    // NEW: State for the task currently being long-pressed (Context Menu)
+    val taskInContext: Task? = null
 )
 
 class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
@@ -35,6 +37,8 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
     private val _selectedTime = MutableStateFlow<LocalTime?>(null)
     private val _isDatePickerVisible = MutableStateFlow(false)
     private val _isTimePickerVisible = MutableStateFlow(false)
+    // NEW: Context Menu State
+    private val _taskInContext = MutableStateFlow<Task?>(null)
 
     val uiState: StateFlow<DashboardUiState> = repository.getAllTasks()
         .map { taskList ->
@@ -58,13 +62,24 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
         .combine(_isTimePickerVisible) { uiState, isVisible ->
             uiState.copy(isTimePickerVisible = isVisible)
         }
+        // NEW COMBINE: Context Menu State
+        .combine(_taskInContext) { uiState, task ->
+            uiState.copy(taskInContext = task)
+        }
         // -----------------------------------------------------------------
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = DashboardUiState()
         )
-    // --- NEW: Date/Time Update Functions ---
+
+    // --- NEW: Context Menu Functions ---
+
+    fun setTaskInContext(task: Task?) {
+        _taskInContext.value = task
+    }
+
+    // --- Date/Time Update Functions ---
 
     fun setDatePickerVisibility(isVisible: Boolean) {
         _isDatePickerVisible.value = isVisible
@@ -76,7 +91,6 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
 
     fun updateSelectedDate(date: LocalDate) {
         _selectedDate.value = date
-        // Immediately show time picker after date is set, if time isn't set yet
         if (_selectedTime.value == null) {
             setTimePickerVisibility(true)
         }
@@ -88,7 +102,7 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
 
     // --- State Update Functions ---
 
-    fun setAddDialogVisibility(isVisible: Boolean) { // Renamed
+    fun setAddDialogVisibility(isVisible: Boolean) {
         _isAddDialogVisible.value = isVisible
         if (!isVisible) {
             _newTaskTitleInput.value = ""
@@ -109,12 +123,10 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
 
         if (title.isNotEmpty()) {
             viewModelScope.launch {
-                // TODO: Update Task entity to hold Optional date/time fields first!
-                // val newTask = Task(title = title, dueDate = date, dueTime = time)
-                val newTask = Task(title = title) // Placeholder until Task is updated
+                // val newTask = Task(title = title, dueDate = date, dueTime = time) // Placeholder until Task is updated
+                val newTask = Task(title = title)
                 repository.insertTask(newTask)
 
-                // Reset states after adding task
                 setAddDialogVisibility(false)
                 _selectedDate.value = null
                 _selectedTime.value = null

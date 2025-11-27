@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -94,31 +95,46 @@ fun Dashboard(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
                 items(uiState.taskList, key = { it.id }) { task ->
-                    Card(
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                onClick = {
-                                    // Navigate to the TaskDetails screen, passing the task's ID
-                                    navController.navigate(Routes.taskDetailsPath(task.id))
-                                }
-                            )
-                ) {
-                        Row(
+                    Box {
+                        Card(
+                            shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                // CHANGE: Use combinedClickable for tap and long-press
+                                .combinedClickable(
+                                    // Tap (Click) navigates to details
+                                    onClick = {
+                                        navController.navigate(Routes.taskDetailsPath(task.id))
+                                    },
+                                    // Long Press shows the Context Menu
+                                    onLongClick = {
+                                        viewModel.setTaskInContext(task)
+                                    }
+                                )
                         ) {
-                            Text(
-                                text = task.title,
-                                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                                style = MaterialTheme.typography.bodyLarge
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = task.title,
+                                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        }
+                        // Only show the menu if this specific task matches the one in context
+                        if (uiState.taskInContext == task) {
+                            TaskContextMenu(
+                                task = task,
+                                onDismiss = { viewModel.setTaskInContext(null) }, // Dismiss menu action
+                                onToggleCompletion = viewModel::updateTaskCompletion
                             )
                         }
+                    }
                 }
-            }
         }
     }
 }
