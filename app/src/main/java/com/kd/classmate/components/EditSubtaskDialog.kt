@@ -1,4 +1,3 @@
-// File: EditSubtaskDialog.kt
 package com.kd.classmate.components
 
 import androidx.compose.foundation.layout.Column
@@ -8,7 +7,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -18,11 +17,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
 
 @Composable
 fun EditSubtaskDialog(
@@ -30,7 +27,7 @@ fun EditSubtaskDialog(
     onTitleChange: (String) -> Unit,
     onCancel: () -> Unit,
     onSaveClick: () -> Unit,
-    onDeleteClick: () -> Unit // Include delete option for subtasks
+    // REMOVED: onDeleteClick: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -44,14 +41,14 @@ fun EditSubtaskDialog(
     AlertDialog(
         onDismissRequest = onCancel,
         title = {
-            Text(text = "Edit Subtask") // Updated Title
+            Text(text = "Edit Subtask")
         },
         text = {
             Column {
                 OutlinedTextField(
                     value = currentTitle,
                     onValueChange = onTitleChange,
-                    label = { Text("Subtask Title") }, // Updated Label
+                    label = { Text("Subtask Title") },
                     singleLine = true,
                     modifier = Modifier.focusRequester(focusRequester),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -66,7 +63,7 @@ fun EditSubtaskDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Modify the title or delete the subtask.",
+                    text = "Modify the title.",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -80,19 +77,8 @@ fun EditSubtaskDialog(
             }
         },
         dismissButton = {
-            Column {
-                TextButton(onClick = onCancel) {
-                    Text("Cancel")
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = onDeleteClick,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Red
-                    )
-                ) {
-                    Text("Delete")
-                }
+            TextButton(onClick = onCancel) {
+                Text("Cancel")
             }
         }
     )
