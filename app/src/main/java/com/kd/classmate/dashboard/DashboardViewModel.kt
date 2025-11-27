@@ -15,21 +15,15 @@ import kotlinx.coroutines.launch
 // Define the UI state
 data class DashboardUiState(
     val taskList: List<Task> = emptyList(),
-    val isAddDialogVisible: Boolean = false, // Renamed for clarity
-    val newTaskTitleInput: String = "",
-    val taskBeingEdited: Task? = null, // NEW: The task currently being edited
-    val editTaskTitleInput: String = "" // NEW: Input for the edit dialog
+    val isAddDialogVisible: Boolean = false,
+    val newTaskTitleInput: String = ""
 )
 
 class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
 
-    // Internal mutable state flows for UI-specific controls
+    // Internal mutable state flows (CLEANED UP)
     private val _isAddDialogVisible = MutableStateFlow(false)
     private val _newTaskTitleInput = MutableStateFlow("")
-    private val _taskBeingEdited = MutableStateFlow<Task?>(null) // NEW
-    private val _editTaskTitleInput = MutableStateFlow("") // NEW
-
-    // Combine the task list flow with the UI control flows
     val uiState: StateFlow<DashboardUiState> = repository.getAllTasks()
         .map { taskList ->
             DashboardUiState(taskList = taskList)
@@ -40,12 +34,7 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
         .combine(_newTaskTitleInput) { uiState, input ->
             uiState.copy(newTaskTitleInput = input)
         }
-        .combine(_taskBeingEdited) { uiState, task -> // NEW Combine
-            uiState.copy(taskBeingEdited = task)
-        }
-        .combine(_editTaskTitleInput) { uiState, input -> // NEW Combine
-            uiState.copy(editTaskTitleInput = input)
-        }
+        // REMOVED: combines for _taskBeingEdited and _editTaskTitleInput
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -65,21 +54,6 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
         _newTaskTitleInput.value = input
     }
 
-    // NEW: Functions to manage the Edit Dialog state
-    fun startEdit(task: Task) {
-        _taskBeingEdited.value = task
-        _editTaskTitleInput.value = task.title
-    }
-
-    fun cancelEdit() {
-        _taskBeingEdited.value = null
-        _editTaskTitleInput.value = ""
-    }
-
-    fun setEditTaskTitleInput(input: String) {
-        _editTaskTitleInput.value = input
-    }
-
     // --- CRUD Functions ---
 
     // CREATE (C)
@@ -95,34 +69,16 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
         }
     }
 
-    // NEW: UPDATE (U) - Function to save the new title
-    fun saveEditedTask() {
-        val task = _taskBeingEdited.value ?: return
-        val newTitle = _editTaskTitleInput.value.trim()
 
-        if (newTitle.isNotEmpty() && newTitle != task.title) {
-            viewModelScope.launch {
-                // Create a copy of the task with the updated title
-                val updatedTask = task.copy(title = newTitle)
-                repository.updateTask(updatedTask)
-                cancelEdit() // Close the dialog and reset state
-            }
-        } else if (newTitle.isNotEmpty()) {
-            // If the title is the same but the user pressed save, just close the dialog
-            cancelEdit()
-        }
-    }
-
-    // UPDATE (U) - for marking a task complete/incomplete
+    // UPDATE (U) - for marking a task complete/incomplete (REMAINS)
     fun updateTaskCompletion(task: Task, isCompleted: Boolean) {
         viewModelScope.launch {
-            // Create a copy of the task with the updated completion status
             val updatedTask = task.copy(isCompleted = isCompleted)
             repository.updateTask(updatedTask)
         }
     }
 
-    // DELETE (D)
+    // DELETE (D) (REMAINS, as it's a generic repository method)
     fun deleteTask(task: Task) {
         viewModelScope.launch {
             repository.deleteTask(task)

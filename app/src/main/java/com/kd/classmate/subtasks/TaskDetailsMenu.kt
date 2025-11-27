@@ -3,13 +3,9 @@ package com.kd.classmate.subtasks
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAlert
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.RestoreFromTrash
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -22,12 +18,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import com.kd.classmate.data.Task
 
 @Composable
-fun TaskDetailsMenu(navController: NavController) {
+fun TaskDetailsMenu(
+    navController: NavController,
+    task: Task?,
+    onStartEdit: () -> Unit, // CHANGE: Simplified signature
+    onDelete: () -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
+    if(task==null) return
     Box {
         IconButton(onClick = { expanded = !expanded }) {
             Icon(
@@ -52,6 +54,7 @@ fun TaskDetailsMenu(navController: NavController) {
                 },
                 onClick = {
                     expanded = false
+                    onStartEdit()
                 }
             )
 
@@ -85,6 +88,8 @@ fun TaskDetailsMenu(navController: NavController) {
                 },
                 onClick = {
                     expanded = false
+                    // Trigger the delete function
+                    onDelete()
                 }
             )
         }

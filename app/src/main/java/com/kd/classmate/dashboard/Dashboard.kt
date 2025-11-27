@@ -1,6 +1,7 @@
 package com.kd.classmate.dashboard
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -51,20 +52,6 @@ fun Dashboard(navController: NavController) {
             onAddClick = viewModel::addTask
         )
     }
-
-    // --- 2. Edit Task Dialog ---
-    uiState.taskBeingEdited?.let { task ->
-        EditTaskDialog(
-            currentTitle = uiState.editTaskTitleInput,
-            onTitleChange = viewModel::setEditTaskTitleInput,
-            onCancel = viewModel::cancelEdit,
-            onSaveClick = viewModel::saveEditedTask,
-            onDeleteClick = {
-                viewModel.deleteTask(task)
-                viewModel.cancelEdit()
-            }
-        )
-    }
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -96,34 +83,30 @@ fun Dashboard(navController: NavController) {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(uiState.taskList, key = { it.id }) { task ->
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .combinedClickable(
-                            onClick = {
-                                // Navigate to the TaskDetails screen, passing the task's ID
-                                navController.navigate(Routes.taskDetailsPath(task.id))
-                            },
-                            onLongClick = {
-                                viewModel.startEdit(task)
-                            }
-                        )
-                ) {
-                    Row(
+                items(uiState.taskList, key = { it.id }) { task ->
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = task.title,
-                            // Completion status is still shown via text decoration
-                            textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
+                            .clickable(
+                                onClick = {
+                                    // Navigate to the TaskDetails screen, passing the task's ID
+                                    navController.navigate(Routes.taskDetailsPath(task.id))
+                                }
+                            )
+                ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = task.title,
+                                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
                 }
             }
         }
