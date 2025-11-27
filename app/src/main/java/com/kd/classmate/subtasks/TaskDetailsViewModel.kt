@@ -1,5 +1,3 @@
-// File: TaskDetailsViewModel.kt (REVISED)
-
 package com.kd.classmate.subtasks
 
 import androidx.lifecycle.ViewModel
@@ -11,7 +9,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 // Define the UI state for the TaskDetails screen
@@ -19,9 +16,10 @@ data class TaskDetailsUiState(
     val task: Task? = null,
     val title: String = "Loading...",
     val isLoading: Boolean = true,
-    // NEW EDIT DIALOG STATE
     val isEditDialogVisible: Boolean = false,
-    val editTaskTitleInput: String = ""
+    val editTaskTitleInput: String = "",
+    // NEW: State for delete confirmation dialog
+    val isDeleteConfirmationVisible: Boolean = false
 )
 
 class TaskDetailsViewModel(
@@ -29,23 +27,26 @@ class TaskDetailsViewModel(
     private val taskId: Int
 ) : ViewModel() {
 
-    // Internal flows for current task and edit state
+    // Internal flows for current task and dialog states
     private val _taskFlow = MutableStateFlow<Task?>(null)
     private val _isEditDialogVisible = MutableStateFlow(false)
     private val _editTaskTitleInput = MutableStateFlow("")
+    private val _isDeleteConfirmationVisible = MutableStateFlow(false)
 
     // Combine flows into the public StateFlow
     val uiState: StateFlow<TaskDetailsUiState> = combine(
         _taskFlow,
         _isEditDialogVisible,
-        _editTaskTitleInput
-    ) { task, isVisible, input ->
+        _editTaskTitleInput,
+        _isDeleteConfirmationVisible
+    ) { task, isEditVisible, editInput, isDeleteVisible ->
         TaskDetailsUiState(
             task = task,
             title = task?.title ?: "Loading...",
             isLoading = task == null,
-            isEditDialogVisible = isVisible,
-            editTaskTitleInput = input
+            isEditDialogVisible = isEditVisible,
+            editTaskTitleInput = editInput,
+            isDeleteConfirmationVisible = isDeleteVisible
         )
     }.stateIn(
         scope = viewModelScope,
@@ -58,14 +59,21 @@ class TaskDetailsViewModel(
         viewModelScope.launch {
             repository.getAllTasks()
                 .collect { allTasks ->
-                    // Find the specific task and update the internal flow
                     _taskFlow.value = allTasks.find { it.id == taskId }
                 }
         }
     }
 
-    // --- EDIT STATE MANAGEMENT (MOVED FROM DASHBOARD) ---
+    // --- DELETE DIALOG STATE MANAGEMENT ---
+    fun showDeleteConfirmation() {
+        _isDeleteConfirmationVisible.value = true
+    }
 
+    fun hideDeleteConfirmation() {
+        _isDeleteConfirmationVisible.value = false
+    }
+
+    // --- EDIT STATE MANAGEMENT ---
     fun startEdit() {
         val task = _taskFlow.value ?: return
         _editTaskTitleInput.value = task.title
@@ -92,15 +100,16 @@ class TaskDetailsViewModel(
                 cancelEdit()
             }
         } else if (newTitle.isNotEmpty()) {
-            cancelEdit() // Title is the same, just close
+            cancelEdit()
         }
     }
 
-    // --- DELETE FUNCTION (MOVED FROM DASHBOARD) ---
+    // --- DELETE ACTION (Called after confirmation) ---
     fun deleteTask() {
         val task = _taskFlow.value ?: return
         viewModelScope.launch {
             repository.deleteTask(task)
+            hideDeleteConfirmation()
         }
     }
 }

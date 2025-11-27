@@ -1,4 +1,4 @@
-package com.kd.classmate.components // FIX 2: Updated package directive
+package com.kd.classmate.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -24,22 +24,21 @@ import androidx.compose.ui.unit.dp
 fun EditTaskDialog(
     currentTitle: String,
     onTitleChange: (String) -> Unit,
-    onCancel: () -> Unit, // FIX 1: Renamed from onDismiss to onCancel
+    onCancel: () -> Unit,
     onSaveClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    // REMOVED: onDeleteClick: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val isSaveButtonEnabled = currentTitle.isNotBlank()
 
-    // Auto-focus the text field when the dialog appears
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
         keyboardController?.show()
     }
 
     AlertDialog(
-        onDismissRequest = onCancel, // Use onCancel for outside dismissal
+        onDismissRequest = onCancel,
         title = {
             Text(text = "Edit Task")
         },
@@ -63,7 +62,7 @@ fun EditTaskDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Modify the title or delete the task.",
+                    text = "Modify the title.",
                     style = androidx.compose.material3.MaterialTheme.typography.bodySmall
                 )
             }
@@ -77,19 +76,9 @@ fun EditTaskDialog(
             }
         },
         dismissButton = {
-            Column {
-                TextButton(onClick = onCancel) { // FIX 1: Correctly uses onCancel
-                    Text("Cancel")
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = onDeleteClick,
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = androidx.compose.ui.graphics.Color.Red
-                    )
-                ) {
-                    Text("Delete")
-                }
+            // Only the Cancel button remains
+            TextButton(onClick = onCancel) {
+                Text("Cancel")
             }
         }
     )

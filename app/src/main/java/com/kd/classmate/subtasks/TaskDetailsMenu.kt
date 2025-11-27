@@ -25,8 +25,8 @@ import com.kd.classmate.data.Task
 fun TaskDetailsMenu(
     navController: NavController,
     task: Task?,
-    onStartEdit: () -> Unit, // CHANGE: Simplified signature
-    onDelete: () -> Unit
+    onStartEdit: () -> Unit,
+    onDelete: () -> Unit // This now shows the confirmation dialog
 ) {
     var expanded by remember { mutableStateOf(false) }
     if(task==null) return
@@ -42,7 +42,6 @@ fun TaskDetailsMenu(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
-            // Removed hardcoded width for natural Material 3 sizing
         ) {
             DropdownMenuItem(
                 text = { Text("Edit") },
@@ -71,10 +70,8 @@ fun TaskDetailsMenu(
                 }
             )
 
-            // VISUAL SEPARATOR
             HorizontalDivider()
 
-            // 3. SETTINGS
             DropdownMenuItem(
                 text = {
                     Text("Delete task",
@@ -88,8 +85,7 @@ fun TaskDetailsMenu(
                 },
                 onClick = {
                     expanded = false
-                    // Trigger the delete function
-                    onDelete()
+                    onDelete() // Trigger the confirmation dialog
                 }
             )
         }
