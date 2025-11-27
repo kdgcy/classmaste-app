@@ -1,17 +1,17 @@
 package com.kd.classmate.dashboard
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues // NEW: For padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn // NEW: For displaying a list
-import androidx.compose.foundation.lazy.items // NEW: To iterate through the list
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -27,34 +27,51 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState // NEW: To observe the Flow
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier // NEW: For modifiers
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
+import com.kd.classmate.components.AddTaskDialog
+import com.kd.classmate.components.EditTaskDialog // UPDATED IMPORT for EditTaskDialog
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) {
 
-    // Initialize the ViewModel using the factory
+    // Initialize the ViewModel and collect state
     val viewModel: DashboardViewModel = viewModel(factory = factory)
-    // Collect the UI state as Compose state
     val uiState = viewModel.uiState.collectAsState().value
 
-    if (uiState.isDialogVisible) {
+    // --- 1. Add Task Dialog ---
+    // Note: AddTaskDialog is assumed to be in the same package (com.kd.classmate.dashboard)
+    if (uiState.isAddDialogVisible) {
         AddTaskDialog(
             taskTitle = uiState.newTaskTitleInput,
             onTitleChange = viewModel::setNewTaskTitleInput,
-            onDismiss = { viewModel.setDialogVisibility(false) },
+            onDismiss = { viewModel.setAddDialogVisibility(false) },
             onAddClick = viewModel::addTask
         )
     }
+
+    // --- 2. Edit Task Dialog ---
+    // taskBeingEdited is non-null only when the Edit Dialog should be visible
+    uiState.taskBeingEdited?.let { task ->
+        EditTaskDialog(
+            currentTitle = uiState.editTaskTitleInput,
+            onTitleChange = viewModel::setEditTaskTitleInput,
+            onCancel = viewModel::cancelEdit, // Corrected function name
+            onSaveClick = viewModel::saveEditedTask,
+            onDeleteClick = {
+                viewModel.deleteTask(task) // Delete the selected task
+                viewModel.cancelEdit() // Close dialog
+            }
+        )
+    }
+
 
     Scaffold(
         topBar = {
@@ -74,7 +91,8 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    viewModel.setDialogVisibility(true)
+                    // Open the Add Task Dialog
+                    viewModel.setAddDialogVisibility(true)
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -94,19 +112,19 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(uiState.taskList) { task ->
+            items(uiState.taskList, key = { it.id }) { task ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
-                            //Toggle completion status when the row is clicked
-                            viewModel.updateTaskCompletion(task, !task.isCompleted)
-                        }
-                        //Trigger deletion on a Long Press
+                        // Combined Clickable for short click (update) and long click (edit)
                         .combinedClickable(
-                            onClick = { viewModel.updateTaskCompletion(task, !task.isCompleted) },
+                            // Short click: Toggle completion status
+                            onClick = {
+                                viewModel.updateTaskCompletion(task, !task.isCompleted)
+                            },
+                            // Long Press: Open the Edit Dialog
                             onLongClick = {
-                                viewModel.deleteTask(task)
+                                viewModel.startEdit(task)
                             }
                         )
                         .padding(horizontal = 8.dp),

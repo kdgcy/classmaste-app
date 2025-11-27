@@ -1,4 +1,4 @@
-package com.kd.classmate.dashboard
+package com.kd.classmate.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +18,7 @@ import androidx.compose.ui.focus.focusRequester // NEW
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardActions // NEW
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController // NEW
 
 @Composable
@@ -70,7 +71,7 @@ fun AddTaskDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Enter a title for your new task.",
-                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
         },
