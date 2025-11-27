@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -30,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -43,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -154,57 +158,59 @@ fun TaskDetails(
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
             // Subtask List with SWIPE-TO-DELETE
             items(uiState.subtaskList, key = { it.id }) { subtask ->
+                // The visibility toggle is still needed for the smooth exit animation
                 var isVisible by remember { mutableStateOf(true) }
 
                 // 1. SwipeToDismissBox State
                 val dismissState = rememberSwipeToDismissBoxState(
-                    confirmValueChange = { value ->
-                        if (value == SwipeToDismissBoxValue.EndToStart) { // Swipe Left
-                            isVisible = false // Trigger the fade out animation
-                            true // Allow dismissal
-                        } else {
-                            false
-                        }
-                    }
+                    // FIX: Confirm value change must be removed or always return false
+                    // We remove it entirely to prevent automatic dismissal.
                 )
 
-                // 2. Perform deletion after the dismissal animation starts
-                LaunchedEffect(dismissState.currentValue) {
-                    if (dismissState.currentValue == SwipeToDismissBoxValue.Settled) return@LaunchedEffect
-
-                    if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
-                        // Small delay to let the animation start before deleting data
-                        delay(300)
-                        viewModel.deleteSubtask(subtask)
-                    }
-                }
+                // LaunchedEffect is removed, as deletion happens on button click.
 
                 // 3. Animated Visibility Wrapper
                 AnimatedVisibility(
                     visible = isVisible,
                     exit = shrinkVertically(tween(300)) + fadeOut(tween(300))
-                ) {
+                ){
                     // 4. SwipeToDismissBox Composable
                     SwipeToDismissBox(
                         state = dismissState,
+                        enableDismissFromStartToEnd = false, // Only allow swipe from EndToStart
                         backgroundContent = {
-                            val color = when (dismissState.targetValue) {
-                                SwipeToDismissBoxValue.StartToEnd, SwipeToDismissBoxValue.Settled -> Color.Transparent
-                                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error // Swipe left shows red
-                            }
-                            // Background icon and color
+                            // Calculate scale based on swipe progress (from 0 to 1)
+                            val progress = dismissState.progress
+                            val scale = Math.min(1f, progress)
+
+                            // FIX: Background is now a clickable icon button
                             Box(
                                 Modifier
                                     .fillMaxSize()
-                                    .background(color)
+                                    .background(Color.Transparent)
                                     .padding(horizontal = 20.dp),
                                 contentAlignment = Alignment.CenterEnd
                             ) {
-                                Icon(
-                                    Icons.Filled.Delete,
-                                    contentDescription = "Delete",
-                                    tint = MaterialTheme.colorScheme.onError
-                                )
+                                IconButton(
+                                    onClick = {
+                                        // 💥 NEW LOGIC: Click the button to perform delete 💥
+                                        isVisible = false // Trigger smooth exit animation
+                                        viewModel.deleteSubtask(subtask) // Delete from database
+                                    },
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .scale(scale) // Scale the icon/circle based on swipe progress
+                                        .background(
+                                            color = MaterialTheme.colorScheme.error,
+                                            shape = CircleShape
+                                        )
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Delete,
+                                        contentDescription = "Delete",
+                                        tint = MaterialTheme.colorScheme.onError,
+                                    )
+                                }
                             }
                         },
                         // The actual content to be swiped
@@ -215,14 +221,13 @@ fun TaskDetails(
                                     .fillMaxWidth()
                                     .combinedClickable(
                                         onClick = {
-                                            // Simple click still toggles completion
                                             viewModel.updateSubtaskCompletion(subtask, !subtask.isCompleted)
                                         },
                                         onLongClick = {
-                                            viewModel.startEditSubtask(subtask) // Long press starts edit
+                                            viewModel.startEditSubtask(subtask)
                                         }
                                     )
-                                    .background(MaterialTheme.colorScheme.surface) // Ensures background is covered
+                                    .background(MaterialTheme.colorScheme.surface)
                                     .padding(vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
