@@ -49,7 +49,17 @@ fun Dashboard(navController: NavController) {
             taskTitle = uiState.newTaskTitleInput,
             onTitleChange = viewModel::setNewTaskTitleInput,
             onDismiss = { viewModel.setAddDialogVisibility(false) },
-            onAddClick = viewModel::addTask
+            onAddClick = viewModel::addTask,
+
+            // PICKER PARAMETERS
+            selectedDate = uiState.selectedDate,
+            selectedTime = uiState.selectedTime,
+            isDatePickerVisible = uiState.isDatePickerVisible,
+            isTimePickerVisible = uiState.isTimePickerVisible,
+            onDatePickerVisibilityChange = viewModel::setDatePickerVisibility,
+            onTimePickerVisibilityChange = viewModel::setTimePickerVisibility,
+            onDateSelected = viewModel::updateSelectedDate,
+            onTimeSelected = viewModel::updateSelectedTime,
         )
     }
     Scaffold(

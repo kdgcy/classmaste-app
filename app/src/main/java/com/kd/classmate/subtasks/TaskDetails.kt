@@ -32,13 +32,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +53,6 @@ import com.kd.classmate.components.AddSubtaskDialog
 import com.kd.classmate.components.DeleteConfirmationDialog
 import com.kd.classmate.components.EditSubtaskDialog
 import com.kd.classmate.components.EditTaskDialog
-import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
