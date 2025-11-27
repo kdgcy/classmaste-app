@@ -1,6 +1,7 @@
 package com.kd.classmate.data.subtaskdata
 
 import androidx.room.Dao
+import androidx.room.Delete // NEW IMPORT
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -19,5 +20,7 @@ interface SubtaskDao {
     @Update
     suspend fun updateSubtask(subtask: Subtask)
 
-    // Delete functionality will be added in a later RUD step
+    // NEW: Delete Operation
+    @Delete
+    suspend fun deleteSubtask(subtask: Subtask)
 }

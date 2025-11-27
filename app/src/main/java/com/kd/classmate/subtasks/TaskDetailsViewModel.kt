@@ -21,10 +21,16 @@ data class TaskDetailsUiState(
     val isEditDialogVisible: Boolean = false,
     val editTaskTitleInput: String = "",
     val isDeleteConfirmationVisible: Boolean = false,
+
     // Subtask States
     val subtaskList: List<Subtask> = emptyList(),
     val isSubtaskAddDialogVisible: Boolean = false,
-    val newSubtaskTitleInput: String = ""
+    val newSubtaskTitleInput: String = "",
+
+    // NEW: Subtask Edit States
+    val subtaskBeingEdited: Subtask? = null,
+    val isSubtaskEditDialogVisible: Boolean = false,
+    val editSubtaskTitleInput: String = ""
 )
 
 class TaskDetailsViewModel(
@@ -44,22 +50,21 @@ class TaskDetailsViewModel(
     private val _isSubtaskAddDialogVisible = MutableStateFlow(false)
     private val _newSubtaskTitleInput = MutableStateFlow("")
 
+    // NEW: Internal flows for Subtask Edit
+    private val _subtaskBeingEdited = MutableStateFlow<Subtask?>(null)
+    private val _isSubtaskEditDialogVisible = MutableStateFlow(false)
+    private val _editSubtaskTitleInput = MutableStateFlow("")
+
+
     // Combine flows into the public StateFlow
     @Suppress("UNCHECKED_CAST")
     val uiState: StateFlow<TaskDetailsUiState> = combine(
-        // FIX: Combine using a list of flows, which forces the compiler to use
-        // the single-argument lambda (Array<Any?>) overload.
         listOf(
-            _taskFlow,
-            _isEditDialogVisible,
-            _editTaskTitleInput,
-            _isDeleteConfirmationVisible,
-            _subtaskListFlow,
-            _isSubtaskAddDialogVisible,
-            _newSubtaskTitleInput
+            _taskFlow, _isEditDialogVisible, _editTaskTitleInput, _isDeleteConfirmationVisible,
+            _subtaskListFlow, _isSubtaskAddDialogVisible, _newSubtaskTitleInput,
+            _subtaskBeingEdited, _isSubtaskEditDialogVisible, _editSubtaskTitleInput // NEW FLOWS
         )
     ) { args ->
-        // Manually retrieve and cast each argument from the array
         TaskDetailsUiState(
             task = args[0] as Task?,
             title = (args[0] as Task?)?.title ?: "Loading...",
@@ -69,7 +74,12 @@ class TaskDetailsViewModel(
             isDeleteConfirmationVisible = args[3] as Boolean,
             subtaskList = args[4] as List<Subtask>,
             isSubtaskAddDialogVisible = args[5] as Boolean,
-            newSubtaskTitleInput = args[6] as String
+            newSubtaskTitleInput = args[6] as String,
+
+            // NEW Subtask Edit State Initialization
+            subtaskBeingEdited = args[7] as Subtask?,
+            isSubtaskEditDialogVisible = args[8] as Boolean,
+            editSubtaskTitleInput = args[9] as String
         )
     }.stateIn(
         scope = viewModelScope,
@@ -80,20 +90,54 @@ class TaskDetailsViewModel(
 
     init {
         viewModelScope.launch {
-            repository.getAllTasks()
-                .collect { allTasks ->
-                    _taskFlow.value = allTasks.find { it.id == taskId }
-                }
+            repository.getAllTasks().collect { allTasks -> _taskFlow.value = allTasks.find { it.id == taskId } }
         }
 
         viewModelScope.launch {
-            subtaskRepository.getSubtasksForTask(taskId)
-                .collect { subtasks ->
-                    _subtaskListFlow.value = subtasks
-                }
+            subtaskRepository.getSubtasksForTask(taskId).collect { subtasks -> _subtaskListFlow.value = subtasks }
         }
     }
 
+    // --- NEW SUBTASK EDIT FUNCTIONS ---
+
+    fun startEditSubtask(subtask: Subtask) {
+        _subtaskBeingEdited.value = subtask
+        _editSubtaskTitleInput.value = subtask.title
+        _isSubtaskEditDialogVisible.value = true
+    }
+
+    fun cancelEditSubtask() {
+        _subtaskBeingEdited.value = null
+        _editSubtaskTitleInput.value = ""
+        _isSubtaskEditDialogVisible.value = false
+    }
+
+    fun setEditSubtaskTitleInput(input: String) {
+        _editSubtaskTitleInput.value = input
+    }
+
+    fun saveEditedSubtask() {
+        val subtask = _subtaskBeingEdited.value ?: return
+        val newTitle = _editSubtaskTitleInput.value.trim()
+
+        if (newTitle.isNotEmpty() && newTitle != subtask.title) {
+            viewModelScope.launch {
+                val updatedSubtask = subtask.copy(title = newTitle)
+                subtaskRepository.updateSubtask(updatedSubtask)
+                cancelEditSubtask()
+            }
+        } else if (newTitle.isNotEmpty()) {
+            cancelEditSubtask()
+        }
+    }
+
+    // --- NEW SUBTASK DELETE FUNCTION ---
+
+    fun deleteSubtask(subtask: Subtask) {
+        viewModelScope.launch {
+            subtaskRepository.deleteSubtask(subtask)
+        }
+    }
     // --- SUBTASK STATE/CRUD FUNCTIONS ---
     fun setSubtaskAddDialogVisibility(isVisible: Boolean) {
         _isSubtaskAddDialogVisible.value = isVisible

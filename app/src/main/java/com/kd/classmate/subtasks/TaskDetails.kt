@@ -1,5 +1,7 @@
 package com.kd.classmate.subtasks
 
+import androidx.compose.foundation.ExperimentalFoundationApi // NEW IMPORT
+import androidx.compose.foundation.combinedClickable // NEW IMPORT
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -32,11 +34,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.kd.classmate.components.AddSubtaskDialog
 import com.kd.classmate.components.DeleteConfirmationDialog
-import com.kd.classmate.components.EditTaskDialog
+import com.kd.classmate.components.EditTaskDialog // NEW IMPORT - you will create this file
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.kd.classmate.components.EditSubtaskDialog
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) // NEW OPTIN
 @Composable
 fun TaskDetails(
     navController: NavController,
@@ -75,6 +78,23 @@ fun TaskDetails(
             onDismiss = { viewModel.setSubtaskAddDialogVisibility(false) },
             onAddClick = viewModel::addSubtask
         )
+    }
+
+    // --- NEW: EDIT SUBTASK DIALOG ---
+    // We host a new dialog for editing subtasks
+    uiState.subtaskBeingEdited?.let { subtask ->
+        if (uiState.isSubtaskEditDialogVisible) {
+            EditSubtaskDialog(
+                currentTitle = uiState.editSubtaskTitleInput,
+                onTitleChange = viewModel::setEditSubtaskTitleInput,
+                onCancel = viewModel::cancelEditSubtask,
+                onSaveClick = viewModel::saveEditedSubtask,
+                onDeleteClick = {
+                    viewModel.deleteSubtask(subtask) // Delete the selected subtask
+                    viewModel.cancelEditSubtask() // Close the dialog
+                }
+            )
+        }
     }
 
     Scaffold(
@@ -122,7 +142,20 @@ fun TaskDetails(
             // Subtask List (with Checkbox)
             items(uiState.subtaskList, key = { it.id }) { subtask ->
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        // NEW: Add long press action to trigger the edit flow
+                        .combinedClickable(
+                            onClick = {
+                                // Simple click still toggles completion
+                                viewModel.updateSubtaskCompletion(subtask, !subtask.isCompleted)
+                            },
+                            onLongClick = {
+                                // Long press starts the edit dialog
+                                viewModel.startEditSubtask(subtask)
+                            }
+                        )
+                        .padding(vertical = 8.dp), // Add padding for better touch target
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(
