@@ -49,9 +49,7 @@ fun TaskDetails(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {  }) {
-                        Icon(imageVector = Icons.Filled.MoreVert, contentDescription = null)
-                    }
+                    TaskDetailsMenu(navController)
                 }
             )
         }
