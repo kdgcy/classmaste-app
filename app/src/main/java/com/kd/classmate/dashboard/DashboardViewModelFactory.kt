@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.kd.classmate.data.TaskRepository
 
 class DashboardViewModelFactory(
-    private val repository: TaskRepository
+   val repository: TaskRepository
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")

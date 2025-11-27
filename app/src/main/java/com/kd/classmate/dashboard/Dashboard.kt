@@ -42,6 +42,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.kd.classmate.components.AddTaskDialog
 import com.kd.classmate.components.EditTaskDialog
+import com.kd.classmate.utils.Routes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -177,7 +178,8 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
                                 .fillMaxWidth()
                                 .combinedClickable(
                                     onClick = {
-                                        viewModel.updateTaskCompletion(task, !task.isCompleted)
+                                        // Navigate to the TaskDetails screen, passing the task's ID
+                                        navController.navigate(Routes.taskDetailsPath(task.id)) // NEW: Navigation
                                     },
                                     onLongClick = {
                                         viewModel.startEdit(task)
