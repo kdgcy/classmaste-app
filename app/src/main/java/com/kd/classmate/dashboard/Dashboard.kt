@@ -1,10 +1,8 @@
 package com.kd.classmate.dashboard
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,9 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,15 +21,11 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
@@ -75,8 +66,6 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
             }
         )
     }
-
-
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -109,98 +98,34 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(uiState.taskList, key = { it.id }) { task ->
-                // 1. Create a state for the swipe dismissal
-                val dismissState = rememberSwipeToDismissBoxState(
-                    confirmValueChange = { value ->
-                        when (value) {
-                            //Swipe gesture for Complete
-                            SwipeToDismissBoxValue.StartToEnd -> {
-                                viewModel.updateTaskCompletion(task, !task.isCompleted)
-                                return@rememberSwipeToDismissBoxState false
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .combinedClickable(
+                            onClick = {
+                                // Navigate to the TaskDetails screen, passing the task's ID
+                                navController.navigate(Routes.taskDetailsPath(task.id))
+                            },
+                            onLongClick = {
+                                viewModel.startEdit(task)
                             }
-                            //Swipe gesture for Delete
-                            SwipeToDismissBoxValue.EndToStart -> {
-                                viewModel.deleteTask(task)
-                                // Return true to allow the item to be dismissed (deleted)
-                                return@rememberSwipeToDismissBoxState true
-                            }
-                            else -> true
-                        }
+                        )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = task.title,
+                            // Completion status is still shown via text decoration
+                            textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
-                )
-
-                SwipeToDismissBox(
-                    state = dismissState,
-                    modifier = Modifier,
-                    // Enable both directions
-                    enableDismissFromStartToEnd = true,
-                    enableDismissFromEndToStart = true,
-                    // Background shown during the swipe gesture
-                    backgroundContent = {
-                        val direction = dismissState.dismissDirection
-                        val color = when (direction) {
-                            SwipeToDismissBoxValue.StartToEnd -> Color.Green.copy(alpha = 0.8f) // TOGGLE
-                            SwipeToDismissBoxValue.EndToStart -> Color.Red.copy(alpha = 0.8f)    // DELETE
-                            else -> Color.Transparent
-                        }
-                        val icon = when (direction) {
-                            SwipeToDismissBoxValue.StartToEnd -> if (task.isCompleted) Icons.Filled.Close else Icons.Filled.Done
-                            SwipeToDismissBoxValue.EndToStart -> Icons.Filled.Delete
-                            else -> null
-                        }
-                        val alignment = when (direction) {
-                            SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
-                            SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
-                            else -> Alignment.Center
-                        }
-
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .background(color, RoundedCornerShape(12.dp))
-                                .padding(horizontal = 20.dp),
-                            contentAlignment = alignment
-                        ) {
-                            icon?.let {
-                                Icon(
-                                    imageVector = it,
-                                    contentDescription = "Action",
-                                    tint = Color.White
-                                )
-                            }
-                        }
-                    },
-                    // The Card is the content being swiped
-                    content = {
-                        Card(
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .combinedClickable(
-                                    onClick = {
-                                        // Navigate to the TaskDetails screen, passing the task's ID
-                                        navController.navigate(Routes.taskDetailsPath(task.id)) // NEW: Navigation
-                                    },
-                                    onLongClick = {
-                                        viewModel.startEdit(task)
-                                    }
-                                )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = task.title,
-                                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                            }
-                        }
-                    }
-                )
+                }
             }
         }
     }
