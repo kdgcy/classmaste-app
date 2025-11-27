@@ -112,13 +112,12 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
                 val dismissState = rememberSwipeToDismissBoxState(
                     confirmValueChange = { value ->
                         when (value) {
-                            // VVVV ACTION 1: Left-to-Right (StartToEnd) -> TOGGLE COMPLETION VVVV
+                            //Swipe gesture for Complete
                             SwipeToDismissBoxValue.StartToEnd -> {
                                 viewModel.updateTaskCompletion(task, !task.isCompleted)
-                                // Return false to snap back (toggle action)
                                 return@rememberSwipeToDismissBoxState false
                             }
-                            // VVVV ACTION 2: Right-to-Left (EndToStart) -> DELETE VVVV
+                            //Swipe gesture for Delete
                             SwipeToDismissBoxValue.EndToStart -> {
                                 viewModel.deleteTask(task)
                                 // Return true to allow the item to be dismissed (deleted)
@@ -135,7 +134,6 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
                     // Enable both directions
                     enableDismissFromStartToEnd = true,
                     enableDismissFromEndToStart = true,
-
                     // Background shown during the swipe gesture
                     backgroundContent = {
                         val direction = dismissState.dismissDirection
@@ -177,13 +175,10 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                // Combined Clickable applied to the Card for the whole task row
                                 .combinedClickable(
-                                    // Short click: Toggle completion status
                                     onClick = {
                                         viewModel.updateTaskCompletion(task, !task.isCompleted)
                                     },
-                                    // Long Press: Open the Edit Dialog
                                     onLongClick = {
                                         viewModel.startEdit(task)
                                     }
