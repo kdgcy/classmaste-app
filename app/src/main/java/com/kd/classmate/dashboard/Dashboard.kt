@@ -15,14 +15,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Card // Import Card
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -36,7 +34,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.kd.classmate.components.AddTaskDialog
-import com.kd.classmate.components.EditTaskDialog // UPDATED IMPORT for EditTaskDialog
+import com.kd.classmate.components.EditTaskDialog
+import com.kd.classmate.dashboard.DashboardMenu
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -47,7 +46,6 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
     val uiState = viewModel.uiState.collectAsState().value
 
     // --- 1. Add Task Dialog ---
-    // Note: AddTaskDialog is assumed to be in the same package (com.kd.classmate.dashboard)
     if (uiState.isAddDialogVisible) {
         AddTaskDialog(
             taskTitle = uiState.newTaskTitleInput,
@@ -58,16 +56,15 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
     }
 
     // --- 2. Edit Task Dialog ---
-    // taskBeingEdited is non-null only when the Edit Dialog should be visible
     uiState.taskBeingEdited?.let { task ->
         EditTaskDialog(
             currentTitle = uiState.editTaskTitleInput,
             onTitleChange = viewModel::setEditTaskTitleInput,
-            onCancel = viewModel::cancelEdit, // Corrected function name
+            onCancel = viewModel::cancelEdit,
             onSaveClick = viewModel::saveEditedTask,
             onDeleteClick = {
-                viewModel.deleteTask(task) // Delete the selected task
-                viewModel.cancelEdit() // Close dialog
+                viewModel.deleteTask(task)
+                viewModel.cancelEdit()
             }
         )
     }
@@ -78,20 +75,13 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
             CenterAlignedTopAppBar(
                 title = { Text("Dashboard") },
                 actions = {
-                    IconButton(onClick = {  }) {
-                        Icon(
-                            imageVector = Icons.Filled.MoreVert,
-                            contentDescription = null
-                        )
-                        DashboardMenu(navController)
-                    }
+                    DashboardMenu(navController)
                 }
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    // Open the Add Task Dialog
                     viewModel.setAddDialogVisibility(true)
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -113,10 +103,10 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(uiState.taskList, key = { it.id }) { task ->
-                Row(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        // Combined Clickable for short click (update) and long click (edit)
+                        // Combined Clickable applied to the Card for the whole task row
                         .combinedClickable(
                             // Short click: Toggle completion status
                             onClick = {
@@ -127,22 +117,23 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
                                 viewModel.startEdit(task)
                             }
                         )
-                        .padding(horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Checkbox that triggers the update function
-                    Checkbox(
-                        checked = task.isCompleted,
-                        onCheckedChange = { isChecked ->
-                            viewModel.updateTaskCompletion(task, isChecked)
-                        }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = task.title,
-                        textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 16.dp), // Increased padding for better look
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // REMOVED CHECKBOX HERE
+
+                        // Spacer removed since Checkbox is gone
+
+                        Text(
+                            text = task.title,
+                            textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
             }
         }
