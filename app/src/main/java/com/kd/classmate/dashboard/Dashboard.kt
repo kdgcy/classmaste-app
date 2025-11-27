@@ -35,8 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) {
 
@@ -44,6 +46,15 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
     val viewModel: DashboardViewModel = viewModel(factory = factory)
     // Collect the UI state as Compose state
     val uiState = viewModel.uiState.collectAsState().value
+
+    if (uiState.isDialogVisible) {
+        AddTaskDialog(
+            taskTitle = uiState.newTaskTitleInput,
+            onTitleChange = viewModel::setNewTaskTitleInput,
+            onDismiss = { viewModel.setDialogVisibility(false) },
+            onAddClick = viewModel::addTask
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -63,8 +74,7 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    // C - Create: Add a new task on FAB click
-                    viewModel.addTask("Task #${uiState.taskList.size + 1}")
+                    viewModel.setDialogVisibility(true)
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -80,23 +90,23 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues), // Apply padding from the Scaffold
+                .padding(paddingValues),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp) // Inner padding for the list items
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(uiState.taskList) { task ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            // U - Update: Toggle completion status when the row is clicked
+                            //Toggle completion status when the row is clicked
                             viewModel.updateTaskCompletion(task, !task.isCompleted)
                         }
-                        // D - DELETE: Trigger deletion on a Long Press
-                        .combinedClickable( // Import and use combinedClickable
+                        //Trigger deletion on a Long Press
+                        .combinedClickable(
                             onClick = { viewModel.updateTaskCompletion(task, !task.isCompleted) },
                             onLongClick = {
-                                viewModel.deleteTask(task) // Call the delete function
+                                viewModel.deleteTask(task)
                             }
                         )
                         .padding(horizontal = 8.dp),
@@ -106,22 +116,14 @@ fun Dashboard(navController: NavController, factory: ViewModelProvider.Factory) 
                     Checkbox(
                         checked = task.isCompleted,
                         onCheckedChange = { isChecked ->
-                            // U - Update: Call ViewModel function to update completion status
                             viewModel.updateTaskCompletion(task, isChecked)
                         }
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = task.title,
-                        // Add visual feedback: strike-through if completed
                         textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
                         style = MaterialTheme.typography.bodyLarge
-                    )
-                    // Optional: Display ID for debugging
-                    Text(
-                        text = "(ID: ${task.id})",
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
