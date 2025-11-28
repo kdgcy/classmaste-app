@@ -6,7 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.kd.classmate.data.Task
-import com.kd.classmate.services.NotificationReceiver // Import the receiver
+import com.kd.classmate.services.NotificationReceiver
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
@@ -21,7 +21,9 @@ interface NotificationScheduler {
 
 class NotificationSchedulerImpl(private val context: Context) : NotificationScheduler {
 
-    private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    private val alarmManager: AlarmManager by lazy {
+        context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    }
 
     // Key constants for Intent extras
     companion object {
@@ -40,14 +42,13 @@ class NotificationSchedulerImpl(private val context: Context) : NotificationSche
             context,
             task.id,
             intent,
-            // Use FLAG_IMMUTABLE for Android 12+ security, and FLAG_UPDATE_CURRENT to replace existing alarm
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
     }
 
     override fun schedule(task: Task) {
-        val dueDate = task.dueDate ?: return // Cannot schedule without a date
-        val dueTime = task.dueTime ?: return // Cannot schedule without a time
+        val dueDate = task.dueDate ?: return
+        val dueTime = task.dueTime ?: return
 
         // 1. Combine date and time into a single point in time (milliseconds)
         val triggerTime = dueDate
@@ -59,24 +60,32 @@ class NotificationSchedulerImpl(private val context: Context) : NotificationSche
         // 2. Schedule the alarm
         val pendingIntent = getPendingIntent(task)
 
-        // Use setExactAndAllowWhileIdle for reliable scheduling
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP, // Wake up the device
-            triggerTime,
-            pendingIntent
-        )
+        // 🌟 FIX: Wrap the system call in try-catch for stability 🌟
+        try {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP, // Wake up the device
+                triggerTime,
+                pendingIntent
+            )
+        } catch (e: SecurityException) {
+            // Catches permission issues (like SCHEDULE_EXACT_ALARM)
+            println("Security Exception scheduling alarm: ${e.message}")
+            e.printStackTrace()
+        } catch (e: Exception) {
+            // Catches any other runtime error during system interaction
+            println("Runtime Exception scheduling alarm: ${e.message}")
+            e.printStackTrace()
+        }
     }
 
     override fun cancel(taskId: Int) {
         val intent = Intent(context, NotificationReceiver::class.java)
-        // Intent must match the one used for scheduling
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             taskId,
             intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE // FLAG_NO_CREATE means don't create if it doesn't exist
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE
         )
-        // If the alarm exists, cancel it
         pendingIntent?.let {
             alarmManager.cancel(it)
         }
