@@ -27,6 +27,7 @@ class NotificationSchedulerImpl(private val context: Context) : NotificationSche
 
     // Key constants for Intent extras
     companion object {
+        const val ACTION_REMINDER = "com.kd.classmate.ACTION_REMINDER" // 🌟 NEW: Custom Action 🌟
         const val EXTRA_TASK_ID = "EXTRA_TASK_ID"
         const val EXTRA_TASK_TITLE = "EXTRA_TASK_TITLE"
     }
@@ -34,6 +35,8 @@ class NotificationSchedulerImpl(private val context: Context) : NotificationSche
     /** Creates a PendingIntent specific to a task ID */
     private fun getPendingIntent(task: Task): PendingIntent {
         val intent = Intent(context, NotificationReceiver::class.java).apply {
+            // 🌟 FIX: Add unique custom action 🌟
+            action = ACTION_REMINDER
             putExtra(EXTRA_TASK_ID, task.id)
             putExtra(EXTRA_TASK_TITLE, task.title)
         }
@@ -42,6 +45,7 @@ class NotificationSchedulerImpl(private val context: Context) : NotificationSche
             context,
             task.id,
             intent,
+            // Ensure FLAG_IMMUTABLE is present for API 31+ security, and FLAG_UPDATE_CURRENT to replace existing alarm
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
     }
@@ -60,26 +64,39 @@ class NotificationSchedulerImpl(private val context: Context) : NotificationSche
         // 2. Schedule the alarm
         val pendingIntent = getPendingIntent(task)
 
-        // 🌟 FIX: Wrap the system call in try-catch for stability 🌟
+        // Use try-catch for system stability
         try {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP, // Wake up the device
-                triggerTime,
-                pendingIntent
-            )
-        } catch (e: SecurityException) {
-            // Catches permission issues (like SCHEDULE_EXACT_ALARM)
-            println("Security Exception scheduling alarm: ${e.message}")
-            e.printStackTrace()
+            // Check for API 31+ restrictions
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerTime,
+                        pendingIntent
+                    )
+                } else {
+                    // If permission is revoked at runtime, fall back to inexact
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+                }
+            } else {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+            }
         } catch (e: Exception) {
-            // Catches any other runtime error during system interaction
-            println("Runtime Exception scheduling alarm: ${e.message}")
+            // Catches any runtime error during system interaction
+            println("Exception scheduling alarm: ${e.message}")
             e.printStackTrace()
         }
     }
 
     override fun cancel(taskId: Int) {
-        val intent = Intent(context, NotificationReceiver::class.java)
+        val intent = Intent(context, NotificationReceiver::class.java).apply {
+            // 🌟 FIX: Intent must match the one used for scheduling 🌟
+            action = ACTION_REMINDER
+        }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             taskId,

@@ -5,7 +5,8 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.kd.classmate.services.NotificationSchedulerImpl // Required to get the extras
+import com.kd.classmate.services.NotificationSchedulerImpl
+import com.kd.classmate.R // 🌟 ASSUMING: You have a resource file R 🌟
 
 object NotificationPublisher {
     private const val CHANNEL_ID = "classmate_reminders_channel"
@@ -31,8 +32,12 @@ object NotificationPublisher {
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Use a generic Android resource icon (standard practice when R is unavailable)
-        val iconId = android.R.drawable.ic_lock_idle_alarm
+        // 🌟 FIX: Use a simple, reliable constant for the small icon 🌟
+        // This constant is guaranteed to exist and is used if a custom drawable fails to resolve.
+        val iconId = android.R.drawable.stat_notify_error
+
+        // If you have a custom app icon (e.g., ic_stat_name) in your res/drawable:
+        // val iconId = R.drawable.ic_notification_icon
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(iconId)
