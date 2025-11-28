@@ -37,7 +37,7 @@ val appModule = module {
 
     // --- ViewModel Dependencies ---
 
-    // 🌟 FIX: DashboardViewModel now passes both dependencies 🌟
+    // DashboardViewModel
     viewModel {
         DashboardViewModel(
             repository = get(), // TaskRepository
@@ -45,15 +45,20 @@ val appModule = module {
         )
     }
 
-    // NEW: CalendarViewModel injection
-    viewModel { CalendarViewModel(repository = get()) }
+    // 🌟 FIX: CalendarViewModel - Explicitly supplying two dependencies 🌟
+    viewModel {
+        CalendarViewModel(
+            repository = get(), // TaskRepository (1st)
+            notificationScheduler = get() // NotificationScheduler (2nd)
+        )
+    }
 
     viewModel { params ->
         TaskDetailsViewModel(
-            repository = get(), // TaskRepository
-            subtaskRepository = get(), // SubtaskRepository
-            notificationScheduler = get(), // NotificationScheduler
-            taskId = params.get<Int>() // Runtime parameter
+            repository = get(), // 1st
+            subtaskRepository = get(), // 2nd
+            taskId = params.get<Int>(), // 3rd
+            notificationScheduler = get() // 4th
         )
     }
 }

@@ -1,6 +1,6 @@
 package com.kd.classmate.calendar
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.clickable // New import
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.kd.classmate.components.NewAppointmentDialog
+import com.kd.classmate.components.EditAppointmentDialog // 🌟 NEW IMPORT 🌟
 import org.koin.androidx.compose.koinViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -48,6 +49,7 @@ import java.time.temporal.TemporalAdjusters
 private val monthYearFormatter = DateTimeFormatter.ofPattern("MMMM yyyy")
 private val dateFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d")
 private val timeFormatter = DateTimeFormatter.ofPattern("h:mma")
+private val today = LocalDate.now() // Define today here for reuse
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,19 +58,47 @@ fun Calendar(navController: NavController){
 
     val viewModel: CalendarViewModel = koinViewModel()
     val uiState = viewModel.uiState.collectAsState().value
-
-    // 🌟 FIX: Get today's date for comparison 🌟
     val today = LocalDate.now()
 
     // Determine the first day of the month currently displayed
     val firstDayOfMonth = uiState.selectedDate.with(TemporalAdjusters.firstDayOfMonth())
     val daysInMonth = firstDayOfMonth.lengthOfMonth()
-
-    // Calculate offset based on Sunday = 0
     val startDayOffset = if (firstDayOfMonth.dayOfWeek == DayOfWeek.SUNDAY) 0 else firstDayOfMonth.dayOfWeek.value
-
     val totalCells = daysInMonth + startDayOffset
     val numRows = (totalCells + 6) / 7
+
+    // --- EDIT Appointment Dialog Host  ---
+    uiState.appointmentBeingEdited?.let { appointment ->
+        if (uiState.isEditAppointmentDialogVisible) {
+            EditAppointmentDialog(
+                currentAppointment = appointment,
+                currentTime = uiState.editAppointmentTime,
+                title = uiState.editAppointmentTitleInput,
+                isTimePickerVisible = uiState.isTimePickerVisible,
+                onTitleChange = viewModel::setEditAppointmentTitle,
+                onTimePickerVisibilityChange = viewModel::setTimePickerVisibility,
+                onTimeSelected = viewModel::setEditAppointmentTime,
+                onSave = viewModel::saveEditedAppointment,
+                onDelete = viewModel::deleteAppointment,
+                onCancel = viewModel::cancelEditAppointment
+            )
+        }
+    }
+
+    // --- NEW Appointment Dialog Host ---
+    if (uiState.isAppointmentDialogVisible) {
+        NewAppointmentDialog(
+            selectedDate = uiState.selectedDate,
+            currentTime = uiState.newAppointmentTime,
+            title = uiState.newAppointmentTitleInput,
+            isTimePickerVisible = uiState.isTimePickerVisible,
+            onTitleChange = viewModel::setNewAppointmentTitle,
+            onTimePickerVisibilityChange = viewModel::setTimePickerVisibility,
+            onTimeSelected = viewModel::setNewAppointmentTime,
+            onSave = viewModel::saveNewAppointment,
+            onCancel = { viewModel.setAppointmentDialogVisibility(false) }
+        )
+    }
 
     // Create a list of days, including leading nulls
     val calendarDays = mutableListOf<LocalDate?>()
@@ -221,14 +251,19 @@ fun Calendar(navController: NavController){
                 } else if (uiState.scheduledTasks.isEmpty()) {
                     item { Text("No tasks scheduled for this date.") }
                 } else {
-                    items(uiState.scheduledTasks) { task ->
-                        Card(modifier = Modifier.fillMaxWidth()) {
+                    items(uiState.scheduledTasks) { appointment ->
+                        Card(
+                            // Make card clickable to start edit process
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.startEditAppointment(appointment) }
+                        ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
-                                    text = task.title,
+                                    text = appointment.title,
                                     style = MaterialTheme.typography.titleMedium
                                 )
-                                task.dueTime?.let { time ->
+                                appointment.dueTime?.let { time ->
                                     Text(
                                         text = time.format(timeFormatter),
                                         style = MaterialTheme.typography.bodySmall,
@@ -241,20 +276,5 @@ fun Calendar(navController: NavController){
                 }
             }
         }
-    }
-
-    // --- 5. New Appointment Dialog Host ---
-    if (uiState.isAppointmentDialogVisible) {
-        NewAppointmentDialog(
-            selectedDate = uiState.selectedDate,
-            currentTime = uiState.newAppointmentTime,
-            title = uiState.newAppointmentTitleInput,
-            isTimePickerVisible = uiState.isTimePickerVisible,
-            onTitleChange = viewModel::setNewAppointmentTitle,
-            onTimePickerVisibilityChange = viewModel::setTimePickerVisibility,
-            onTimeSelected = viewModel::setNewAppointmentTime,
-            onSave = viewModel::saveNewAppointment,
-            onCancel = { viewModel.setAppointmentDialogVisibility(false) }
-        )
     }
 }

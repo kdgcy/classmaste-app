@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
+import com.kd.classmate.services.NotificationScheduler
 
 // Define the UI state
 data class CalendarUiState(
@@ -21,14 +22,23 @@ data class CalendarUiState(
     val selectedDate: LocalDate = LocalDate.now(),
     val isLoading: Boolean = true,
 
-    // NEW: New Appointment Dialog State
+    // New Appointment Dialog State
     val isAppointmentDialogVisible: Boolean = false,
     val newAppointmentTitleInput: String = "",
     val newAppointmentTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
     val isTimePickerVisible: Boolean = false,
+
+    // 🌟 NEW: Edit Appointment State 🌟
+    val appointmentBeingEdited: Task? = null,
+    val isEditAppointmentDialogVisible: Boolean = false,
+    val editAppointmentTitleInput: String = "",
+    val editAppointmentTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES)
 )
 
-class CalendarViewModel(private val repository: TaskRepository) : ViewModel() {
+class CalendarViewModel(
+    private val repository: TaskRepository,
+    private val notificationScheduler: NotificationScheduler // NEW: Inject Scheduler
+) : ViewModel() {
 
     private val _allTasksFlow = repository.getAllTasks()
     private val _selectedDate = MutableStateFlow(LocalDate.now())
@@ -39,17 +49,19 @@ class CalendarViewModel(private val repository: TaskRepository) : ViewModel() {
     private val _newAppointmentTime = MutableStateFlow(LocalTime.now().truncatedTo(ChronoUnit.MINUTES))
     private val _isTimePickerVisible = MutableStateFlow(false)
 
+    // 🌟 NEW: Edit Appointment Flows 🌟
+    private val _appointmentBeingEdited = MutableStateFlow<Task?>(null)
+    private val _isEditAppointmentDialogVisible = MutableStateFlow(false)
+    private val _editAppointmentTitleInput = MutableStateFlow("")
+    private val _editAppointmentTime = MutableStateFlow(LocalTime.now().truncatedTo(ChronoUnit.MINUTES))
 
     // Combine flows to provide filtered data to the UI (FIXED AMBIGUITY USING ARRAY)
     @Suppress("UNCHECKED_CAST")
     val uiState: StateFlow<CalendarUiState> = combine(
-        listOf( // List of flows being combined (Total 6 flows)
-            _allTasksFlow,
-            _selectedDate,
-            _isAppointmentDialogVisible,
-            _newAppointmentTitleInput,
-            _newAppointmentTime,
-            _isTimePickerVisible
+        listOf(
+            _allTasksFlow, _selectedDate, _isAppointmentDialogVisible, _newAppointmentTitleInput,
+            _newAppointmentTime, _isTimePickerVisible,
+            _appointmentBeingEdited, _isEditAppointmentDialogVisible, _editAppointmentTitleInput, _editAppointmentTime // NEW FLOWS
         )
     ) { args -> // Lambda now accepts a single Array<Any?> argument
         val allTasks = args[0] as List<Task>
@@ -60,9 +72,7 @@ class CalendarViewModel(private val repository: TaskRepository) : ViewModel() {
         val isTimeVisible = args[5] as Boolean
 
         val filteredTasks = allTasks
-            // Filter 1: Must be created as an Appointment
             .filter { it.type == TaskType.APPOINTMENT }
-            // Filter 2: Must not be completed AND match the selected date
             .filter { !it.isCompleted && it.dueDate == selectedDate }
             .sortedWith(compareBy { it.dueTime })
 
@@ -70,11 +80,16 @@ class CalendarViewModel(private val repository: TaskRepository) : ViewModel() {
             scheduledTasks = filteredTasks,
             selectedDate = selectedDate,
             isLoading = false,
+            isAppointmentDialogVisible = args[2] as Boolean,
+            newAppointmentTitleInput = args[3] as String,
+            newAppointmentTime = args[4] as LocalTime,
+            isTimePickerVisible = args[5] as Boolean,
 
-            isAppointmentDialogVisible = isVisible,
-            newAppointmentTitleInput = title,
-            newAppointmentTime = time,
-            isTimePickerVisible = isTimeVisible
+            // NEW Edit State
+            appointmentBeingEdited = args[6] as Task?,
+            isEditAppointmentDialogVisible = args[7] as Boolean,
+            editAppointmentTitleInput = args[8] as String,
+            editAppointmentTime = args[9] as LocalTime
         )
     }.stateIn(
         scope = viewModelScope,
@@ -117,19 +132,69 @@ class CalendarViewModel(private val repository: TaskRepository) : ViewModel() {
 
         if (title.isNotEmpty()) {
             viewModelScope.launch {
-                // 🌟 FIX 2: Ensure TaskType.APPOINTMENT is set when constructing the Task 🌟
                 val newTask = Task(
                     title = title,
                     dueDate = date,
                     dueTime = time,
                     isCompleted = false,
-                    type = TaskType.APPOINTMENT // CRITICAL: Identify this task as an Appointment
+                    type = TaskType.APPOINTMENT
                 )
-                repository.insertTask(newTask)
-
-                // Close and reset dialog state
+                val newId = repository.insertTask(newTask)
+                notificationScheduler.schedule(newTask.copy(id = newId.toInt()))
                 setAppointmentDialogVisibility(false)
             }
+        }
+    }
+
+    // --- 🌟 NEW: Update/Delete Functions 🌟 ---
+
+    fun startEditAppointment(appointment: Task) {
+        _appointmentBeingEdited.value = appointment
+        _editAppointmentTitleInput.value = appointment.title
+        _editAppointmentTime.value = appointment.dueTime ?: LocalTime.now().truncatedTo(ChronoUnit.MINUTES) // Use existing time or current time
+        _isEditAppointmentDialogVisible.value = true
+    }
+
+    fun cancelEditAppointment() {
+        _appointmentBeingEdited.value = null
+        _editAppointmentTitleInput.value = ""
+        _isEditAppointmentDialogVisible.value = false
+    }
+
+    fun setEditAppointmentTitle(title: String) {
+        _editAppointmentTitleInput.value = title
+    }
+
+    fun setEditAppointmentTime(time: LocalTime) {
+        _editAppointmentTime.value = time
+    }
+
+    // U - Update Operation
+    fun saveEditedAppointment() {
+        val appointment = _appointmentBeingEdited.value ?: return
+        val newTitle = _editAppointmentTitleInput.value.trim()
+        val newTime = _editAppointmentTime.value
+
+        if (newTitle.isNotEmpty()) {
+            viewModelScope.launch {
+                val updatedAppointment = appointment.copy(
+                    title = newTitle,
+                    dueTime = newTime
+                )
+                repository.updateTask(updatedAppointment)
+                notificationScheduler.schedule(updatedAppointment) // Reschedule alarm
+                cancelEditAppointment()
+            }
+        }
+    }
+
+    // D - Delete Operation
+    fun deleteAppointment() {
+        val appointment = _appointmentBeingEdited.value ?: return
+        viewModelScope.launch {
+            notificationScheduler.cancel(appointment.id)
+            repository.deleteTask(appointment)
+            cancelEditAppointment()
         }
     }
 }

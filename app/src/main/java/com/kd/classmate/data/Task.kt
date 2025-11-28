@@ -6,8 +6,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 enum class TaskType {
-    TASK, // Created on the Dashboard (a To-Do item)
-    APPOINTMENT // Created on the Calendar screen (a schedule item)
+    TASK, // For Dashboard.kt
+    APPOINTMENT // For Calendar.kt
 }
 
 @Entity(tableName = "taskTable")
@@ -16,11 +16,9 @@ data class Task(
     val id: Int = 0,
     val title: String,
     val isCompleted: Boolean = false,
-
-    // NEW FIELDS for Date and Time
     val dueDate: LocalDate? = null,
     val dueTime: LocalTime? = null,
 
-    // 🌟 NEW FIELD: To track the origin 🌟
+    // To track the origin, its either Task or Appointment
     val type: TaskType = TaskType.TASK
 )
