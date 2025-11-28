@@ -25,17 +25,14 @@ data class TaskDetailsUiState(
     val editTaskTitleInput: String = "",
     val isDeleteConfirmationVisible: Boolean = false,
 
-    // Subtask States
     val subtaskList: List<Subtask> = emptyList(),
     val isSubtaskAddDialogVisible: Boolean = false,
     val newSubtaskTitleInput: String = "",
 
-    // Subtask Edit States
     val subtaskBeingEdited: Subtask? = null,
     val isSubtaskEditDialogVisible: Boolean = false,
     val editSubtaskTitleInput: String = "",
 
-    // 🌟 NEW: Date/Time Picker State 🌟
     val isDatePickerVisible: Boolean = false,
     val isTimePickerVisible: Boolean = false,
     val selectedDate: LocalDate? = null,
@@ -118,7 +115,7 @@ class TaskDetailsViewModel(
             subtaskRepository.getSubtasksForTask(taskId).collect { subtasks -> _subtaskListFlow.value = subtasks }
         }
 
-        // 🌟 NEW: Populate initial date/time from the task once loaded 🌟
+        // Populate initial date/time from the task once loaded
         viewModelScope.launch {
             _taskFlow.collect { task ->
                 if (task != null) {
@@ -139,14 +136,15 @@ class TaskDetailsViewModel(
         _isTimePickerVisible.value = isVisible
     }
 
+    // FIX 1: Corrected conditional logic
     fun updateSelectedDate(date: LocalDate) {
         _selectedDate.value = date
-        // Smooth transition to Time Picker
-        if (_selectedTime.value == null) {
-            viewModelScope.launch {
-                delay(300L)
-                setTimePickerVisibility(true)
-            }
+
+        // FIX: The Time Picker MUST appear if the date was just set, regardless of whether a time was set previously.
+        // This ensures the user can review/confirm/change the time, or that the Time Picker appears if they skipped it initially.
+        viewModelScope.launch {
+            delay(300L)
+            setTimePickerVisibility(true)
         }
     }
 

@@ -87,10 +87,8 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
 
     fun updateSelectedDate(date: LocalDate) {
         _selectedDate.value = date
-
         if (_selectedTime.value == null) {
             viewModelScope.launch {
-                // Introduce a short delay (e.g., 300ms) to allow DatePicker to dismiss smoothly
                 delay(300L)
                 setTimePickerVisibility(true)
             }
