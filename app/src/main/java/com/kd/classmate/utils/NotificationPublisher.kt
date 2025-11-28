@@ -5,8 +5,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.kd.classmate.services.NotificationSchedulerImpl
-import com.kd.classmate.R // 🌟 ASSUMING: You have a resource file R 🌟
 
 object NotificationPublisher {
     private const val CHANNEL_ID = "classmate_reminders_channel"

@@ -12,6 +12,7 @@ import com.kd.classmate.data.subtaskdata.SubtaskDao
 import com.kd.classmate.data.subtaskdata.SubtaskRepository
 import com.kd.classmate.services.NotificationScheduler
 import com.kd.classmate.services.NotificationSchedulerImpl
+import com.kd.classmate.pomodoro.PomodoroViewModel
 
 val appModule = module {
 
@@ -52,6 +53,8 @@ val appModule = module {
             notificationScheduler = get() // NotificationScheduler (2nd)
         )
     }
+
+    viewModel { PomodoroViewModel() }
 
     viewModel { params ->
         TaskDetailsViewModel(
