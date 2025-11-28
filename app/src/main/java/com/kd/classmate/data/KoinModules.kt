@@ -7,39 +7,44 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
-import com.kd.classmate.data.subtaskdata.SubtaskDao // NEW IMPORT
-import com.kd.classmate.data.subtaskdata.SubtaskRepository // NEW IMPORT
+import com.kd.classmate.data.subtaskdata.SubtaskDao
+import com.kd.classmate.data.subtaskdata.SubtaskRepository
+import com.kd.classmate.services.NotificationScheduler
+import com.kd.classmate.services.NotificationSchedulerImpl
 
 val appModule = module {
 
     // --- Data Layer Dependencies ---
 
-    // AppDatabase: Singleton, gets context from Koin
+    // AppDatabase
     single { getDatabase(androidContext()) }
 
     // TaskDao
     single { get<AppDatabase>().taskDao() }
 
-    // NEW: SubtaskDao
+    // SubtaskDao
     single { get<AppDatabase>().subtaskDao() }
 
     // TaskRepository
     single { TaskRepository(get()) }
 
-    // NEW: SubtaskRepository
+    // SubtaskRepository
     single { SubtaskRepository(get()) }
+
+    // Notification Scheduler
+    single<NotificationScheduler> { NotificationSchedulerImpl(androidContext()) }
 
     // --- ViewModel Dependencies ---
 
     // DashboardViewModel
     viewModel { DashboardViewModel(get()) }
 
-    // TaskDetailsViewModel: NOW REQUIRES SubtaskRepository
     viewModel { params ->
         TaskDetailsViewModel(
             repository = get(), // TaskRepository
-            subtaskRepository = get(), // NEW: SubtaskRepository
-            taskId = params.get<Int>()
+            subtaskRepository = get(), // SubtaskRepository
+            notificationScheduler = get(), // NotificationScheduler
+            taskId = params.get<Int>() // Runtime parameter
         )
     }
 }

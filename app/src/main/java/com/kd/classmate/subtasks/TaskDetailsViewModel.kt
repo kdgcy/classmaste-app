@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.LocalTime
+import com.kd.classmate.services.NotificationScheduler
 
 // Define the UI state (UPDATED)
 data class TaskDetailsUiState(
@@ -42,7 +43,8 @@ data class TaskDetailsUiState(
 class TaskDetailsViewModel(
     private val repository: TaskRepository,
     private val subtaskRepository: SubtaskRepository,
-    private val taskId: Int
+    private val taskId: Int,
+    private val notificationScheduler: NotificationScheduler
 ) : ViewModel() {
 
     // Internal flows for task, edit, and delete state
@@ -163,6 +165,13 @@ class TaskDetailsViewModel(
             viewModelScope.launch {
                 val updatedTask = task.copy(dueDate = date, dueTime = time)
                 repository.updateTask(updatedTask)
+
+                // 🌟 NEW: Schedule/Reschedule the alarm 🌟
+                if (date != null && time != null) {
+                    notificationScheduler.schedule(updatedTask)
+                } else {
+                    notificationScheduler.cancel(updatedTask.id) // Cancel if date/time are cleared
+                }
             }
         }
     }
