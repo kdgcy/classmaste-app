@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.kd.classmate.calendar.Calendar
 import com.kd.classmate.dashboard.Dashboard
 import com.kd.classmate.subtasks.TaskDetails
 import com.kd.classmate.utils.Routes
@@ -45,7 +46,8 @@ fun AppNavigation(){
         }
     ) {
         // Dashboard
-        composable(Routes.dashboard) { Dashboard(navController) } // REMOVE: , factory)
+        composable(Routes.dashboard) { Dashboard(navController) }
+        composable(Routes.calendar) { Calendar(navController) }
 
         // TaskDetails
         composable(
@@ -54,11 +56,10 @@ fun AppNavigation(){
         ) { backStackEntry ->
             val taskId = backStackEntry.arguments?.getInt("taskId")
             if (taskId != null) {
-                // TaskDetails now only needs navController and taskId
+                // TaskDetails only needs navController and taskId
                 TaskDetails(
                     navController = navController,
                     taskId = taskId
-                    // REMOVE: factory = factory
                 )
             }
         }

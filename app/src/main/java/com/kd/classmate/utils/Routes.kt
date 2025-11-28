@@ -2,7 +2,7 @@ package com.kd.classmate.utils
 
 object Routes {
     val dashboard = "dashboard"
-    // NEW: Define the route with a required argument
+    val calendar = "calendar"
     val taskDetails = "taskDetails/{taskId}"
 
     // Helper function to create the actual path with the task ID

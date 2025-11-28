@@ -19,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
+import com.kd.classmate.utils.Routes
 
 @Composable
 fun DashboardMenu(navController: NavController) {
@@ -48,6 +49,7 @@ fun DashboardMenu(navController: NavController) {
                 },
                 onClick = {
                     expanded = false
+                    navController.navigate(Routes.calendar)
                 }
             )
 

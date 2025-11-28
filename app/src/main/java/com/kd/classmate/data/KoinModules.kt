@@ -1,5 +1,6 @@
 package com.kd.classmate.data
 
+import com.kd.classmate.calendar.CalendarViewModel
 import com.kd.classmate.data.AppDatabase.Companion.getDatabase
 import com.kd.classmate.dashboard.DashboardViewModel
 import com.kd.classmate.subtasks.TaskDetailsViewModel
@@ -43,6 +44,9 @@ val appModule = module {
             notificationScheduler = get() // NotificationScheduler
         )
     }
+
+    // NEW: CalendarViewModel injection
+    viewModel { CalendarViewModel(repository = get()) }
 
     viewModel { params ->
         TaskDetailsViewModel(
