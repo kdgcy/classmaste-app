@@ -17,7 +17,8 @@ interface TaskDao {
     fun getAllTasks(): Flow<List<Task>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTask(task: Task)
+    // 🌟 FIX 1: Change return type to Long to get the new ID 🌟
+    suspend fun insertTask(task: Task): Long
 
     @Update
     suspend fun updateTask(task: Task)

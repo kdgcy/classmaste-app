@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import kotlinx.coroutines.delay
+import com.kd.classmate.services.NotificationScheduler
 
 // Define the UI state
 data class DashboardUiState(
@@ -27,7 +28,10 @@ data class DashboardUiState(
     val taskInContext: Task? = null
 )
 
-class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
+class DashboardViewModel(
+    private val repository: TaskRepository,
+    private val notificationScheduler: NotificationScheduler
+) : ViewModel() {
 
     // Internal mutable state flows
     private val _isAddDialogVisible = MutableStateFlow(false)
@@ -37,6 +41,8 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
     private val _isDatePickerVisible = MutableStateFlow(false)
     private val _isTimePickerVisible = MutableStateFlow(false)
     private val _taskInContext = MutableStateFlow<Task?>(null)
+
+
 
     val uiState: StateFlow<DashboardUiState> = repository.getAllTasks()
         .map { taskList ->
@@ -126,7 +132,15 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
                     dueDate = date,
                     dueTime = time
                 )
-                repository.insertTask(newTask)
+                // 🌟 FIX 4: Get the inserted ID back (it's a Long) 🌟
+                val newId = repository.insertTask(newTask)
+
+                // 🌟 FIX 5: Schedule the notification if date and time were set 🌟
+                if (date != null && time != null) {
+                    // Create a valid Task object with the new ID for the scheduler
+                    val scheduledTask = newTask.copy(id = newId.toInt())
+                    notificationScheduler.schedule(scheduledTask)
+                }
 
                 setAddDialogVisibility(false)
                 _selectedDate.value = null
@@ -137,16 +151,19 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
 
 
     // UPDATE (U) - for marking a task complete/incomplete (REMAINS)
-    fun updateTaskCompletion(task: Task, isCompleted: Boolean) {
+    // UPDATE (U) - for marking a task complete/incomplete (REMAINS)
+    fun updateTaskCompletion(task: Task) {
         viewModelScope.launch {
-            val updatedTask = task.copy(isCompleted = isCompleted)
+            val updatedTask = task.copy(isCompleted = !task.isCompleted)
             repository.updateTask(updatedTask)
         }
     }
 
-    // DELETE (D) (REMAINS, as it's a generic repository method)
+    // DELETE (D) (REMAINS)
     fun deleteTask(task: Task) {
         viewModelScope.launch {
+            // Cancel the notification before deleting the task
+            notificationScheduler.cancel(task.id)
             repository.deleteTask(task)
         }
     }

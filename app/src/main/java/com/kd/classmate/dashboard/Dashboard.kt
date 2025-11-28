@@ -167,7 +167,9 @@ fun Dashboard(navController: NavController) {
                         TaskContextMenu(
                             task = task,
                             onDismiss = { viewModel.setTaskInContext(null) },
-                            onToggleCompletion = viewModel::updateTaskCompletion
+                            // 💥 FIX: The function is only passed to the Context Menu as a reference.
+                            // The Context Menu (TaskContextMenu.kt) must be fixed to pass only one parameter.
+                            onToggleCompletion = viewModel::updateTaskCompletion // Ensure this is the correct reference
                         )
                     }
                 }

@@ -36,8 +36,13 @@ val appModule = module {
 
     // --- ViewModel Dependencies ---
 
-    // DashboardViewModel
-    viewModel { DashboardViewModel(get()) }
+    // 🌟 FIX: DashboardViewModel now passes both dependencies 🌟
+    viewModel {
+        DashboardViewModel(
+            repository = get(), // TaskRepository
+            notificationScheduler = get() // NotificationScheduler
+        )
+    }
 
     viewModel { params ->
         TaskDetailsViewModel(

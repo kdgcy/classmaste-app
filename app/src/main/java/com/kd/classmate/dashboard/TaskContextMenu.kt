@@ -10,20 +10,22 @@ import com.kd.classmate.data.Task
 fun TaskContextMenu(
     task: Task,
     onDismiss: () -> Unit,
-    onToggleCompletion: (Task, Boolean) -> Unit
+    // 🌟 FIX: Change signature to accept only Task 🌟
+    onToggleCompletion: (Task) -> Unit
 ) {
     val newCompletionStatus = !task.isCompleted
     val menuText = if (task.isCompleted) "Mark as incomplete" else "Mark as complete"
 
     DropdownMenu(
-        expanded = true, // Always true when hosted, visibility controlled by parent
+        expanded = true,
         onDismissRequest = onDismiss
     ) {
         DropdownMenuItem(
             text = { Text(menuText) },
             onClick = {
-                onToggleCompletion(task, newCompletionStatus)
-                onDismiss() // Close the menu after action
+                // The ViewModel handles the actual toggling logic using the task's current status.
+                onToggleCompletion(task)
+                onDismiss()
             }
         )
         // TODO: Add "Edit" and "Delete" actions here if needed later
