@@ -5,7 +5,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.kd.classmate.R // You need a dummy R import or reference to your resources
+import com.kd.classmate.services.NotificationSchedulerImpl // Required to get the extras
 
 object NotificationPublisher {
     private const val CHANNEL_ID = "classmate_reminders_channel"
@@ -26,12 +26,12 @@ object NotificationPublisher {
 
     /** Builds and shows the notification */
     fun showNotification(context: Context, taskId: Int, title: String) {
+        // 1. Ensure channel exists before building the notification
         createNotificationChannel(context)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Placeholder for app icon. You must replace 'R.drawable.ic_launcher_foreground'
-        // with a drawable resource from your project.
+        // Use a generic Android resource icon (standard practice when R is unavailable)
         val iconId = android.R.drawable.ic_lock_idle_alarm
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
