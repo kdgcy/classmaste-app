@@ -1,10 +1,10 @@
 package com.kd.classmate.dashboard
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +21,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,10 +33,29 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.kd.classmate.components.AddTaskDialog
-import com.kd.classmate.components.EditTaskDialog
 import com.kd.classmate.utils.Routes
 import org.koin.androidx.compose.koinViewModel
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
+
+private fun formatDueDate(date: LocalDate?): String {
+    return if (date != null) {
+        // Use a standard formatter like "MMM d, yyyy" (e.g., Jul 27, 2025)
+        date.format(DateTimeFormatter.ofPattern("MMM d, yyyy"))
+    } else {
+        "Not set"
+    }
+}
+private fun formatDueTime(time: LocalTime?): String {
+    return if (time != null) {
+        // Use a standard 12-hour formatter like "h:mma" (e.g., 5:00AM)
+        time.format(DateTimeFormatter.ofPattern("h:mma"))
+    } else {
+        "Not set"
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun Dashboard(navController: NavController) {
@@ -52,7 +72,7 @@ fun Dashboard(navController: NavController) {
             onDismiss = { viewModel.setAddDialogVisibility(false) },
             onAddClick = viewModel::addTask,
 
-            // PICKER PARAMETERS
+            // PICKER PARAMETERS (remains the same)
             selectedDate = uiState.selectedDate,
             selectedTime = uiState.selectedTime,
             isDatePickerVisible = uiState.isDatePickerVisible,
@@ -94,47 +114,64 @@ fun Dashboard(navController: NavController) {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-                items(uiState.taskList, key = { it.id }) { task ->
-                    Box {
-                        Card(
-                            shape = RoundedCornerShape(12.dp),
+            items(uiState.taskList, key = { it.id }) { task ->
+                Box {
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .combinedClickable(
+                                onClick = {
+                                    navController.navigate(Routes.taskDetailsPath(task.id))
+                                },
+                                onLongClick = {
+                                    viewModel.setTaskInContext(task)
+                                }
+                            )
+                    ) {
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                // CHANGE: Use combinedClickable for tap and long-press
-                                .combinedClickable(
-                                    // Tap (Click) navigates to details
-                                    onClick = {
-                                        navController.navigate(Routes.taskDetailsPath(task.id))
-                                    },
-                                    // Long Press shows the Context Menu
-                                    onLongClick = {
-                                        viewModel.setTaskInContext(task)
-                                    }
-                                )
+                                .padding(horizontal = 16.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            // 🌟 NEW: Column to stack Title and Due Date/Time 🌟
+                            Column(modifier = Modifier.weight(1f)) {
+                                // 1. Task Title
                                 Text(
                                     text = task.title,
                                     textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
                                     style = MaterialTheme.typography.bodyLarge
                                 )
+
+                                // 2. Due Date/Time Info (Only display if not completed)
+                                if (!task.isCompleted) {
+                                    Text(
+                                        text = "Due: ${formatDueDate(task.dueDate)}",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = LocalContentColor.current.copy(alpha = 0.6f)
+                                        )
+                                    )
+                                    Text(
+                                        text = "Time: ${formatDueTime(task.dueTime)}",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = LocalContentColor.current.copy(alpha = 0.6f)
+                                        )
+                                    )
+                                }
                             }
                         }
-                        // Only show the menu if this specific task matches the one in context
-                        if (uiState.taskInContext == task) {
-                            TaskContextMenu(
-                                task = task,
-                                onDismiss = { viewModel.setTaskInContext(null) }, // Dismiss menu action
-                                onToggleCompletion = viewModel::updateTaskCompletion
-                            )
-                        }
+                    }
+                    // Only show the menu if this specific task matches the one in context
+                    if (uiState.taskInContext == task) {
+                        TaskContextMenu(
+                            task = task,
+                            onDismiss = { viewModel.setTaskInContext(null) },
+                            onToggleCompletion = viewModel::updateTaskCompletion
+                        )
                     }
                 }
+            }
         }
     }
 }
