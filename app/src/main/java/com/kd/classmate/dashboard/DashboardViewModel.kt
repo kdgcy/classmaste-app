@@ -13,8 +13,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
+import kotlinx.coroutines.delay
 
-// Define the UI state (UPDATED)
+// Define the UI state
 data class DashboardUiState(
     val taskList: List<Task> = emptyList(),
     val isAddDialogVisible: Boolean = false,
@@ -86,8 +87,13 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
 
     fun updateSelectedDate(date: LocalDate) {
         _selectedDate.value = date
+
         if (_selectedTime.value == null) {
-            setTimePickerVisibility(true)
+            viewModelScope.launch {
+                // Introduce a short delay (e.g., 300ms) to allow DatePicker to dismiss smoothly
+                delay(300L)
+                setTimePickerVisibility(true)
+            }
         }
     }
 
