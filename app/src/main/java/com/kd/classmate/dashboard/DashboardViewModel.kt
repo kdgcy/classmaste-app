@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kd.classmate.data.Task
 import com.kd.classmate.data.TaskRepository
+import com.kd.classmate.data.TaskType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -45,8 +46,11 @@ class DashboardViewModel(
 
 
     val uiState: StateFlow<DashboardUiState> = repository.getAllTasks()
-        .map { taskList ->
-            DashboardUiState(taskList = taskList)
+        .map { allTasks ->
+            val dashboardTasks = allTasks.filter { task ->
+                task.type == TaskType.TASK
+            }
+            DashboardUiState(taskList = dashboardTasks)
         }
         .combine(_isAddDialogVisible) { uiState, isVisible ->
             uiState.copy(isAddDialogVisible = isVisible)
@@ -127,17 +131,18 @@ class DashboardViewModel(
 
         if (title.isNotEmpty()) {
             viewModelScope.launch {
+                // 🌟 FIX 1: Ensure TaskType.TASK is set when constructing the Task 🌟
                 val newTask = Task(
                     title = title,
                     dueDate = date,
-                    dueTime = time
+                    dueTime = time,
+                    type = TaskType.TASK // CRITICAL: Identify this task as belonging to the Dashboard
                 )
-                // 🌟 FIX 4: Get the inserted ID back (it's a Long) 🌟
+
                 val newId = repository.insertTask(newTask)
 
-                // 🌟 FIX 5: Schedule the notification if date and time were set 🌟
+                // Schedule the notification if date and time were set
                 if (date != null && time != null) {
-                    // Create a valid Task object with the new ID for the scheduler
                     val scheduledTask = newTask.copy(id = newId.toInt())
                     notificationScheduler.schedule(scheduledTask)
                 }

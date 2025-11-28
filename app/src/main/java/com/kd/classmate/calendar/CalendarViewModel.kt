@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kd.classmate.data.Task
 import com.kd.classmate.data.TaskRepository
+import com.kd.classmate.data.TaskType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -59,6 +60,9 @@ class CalendarViewModel(private val repository: TaskRepository) : ViewModel() {
         val isTimeVisible = args[5] as Boolean
 
         val filteredTasks = allTasks
+            // Filter 1: Must be created as an Appointment
+            .filter { it.type == TaskType.APPOINTMENT }
+            // Filter 2: Must not be completed AND match the selected date
             .filter { !it.isCompleted && it.dueDate == selectedDate }
             .sortedWith(compareBy { it.dueTime })
 
@@ -113,12 +117,13 @@ class CalendarViewModel(private val repository: TaskRepository) : ViewModel() {
 
         if (title.isNotEmpty()) {
             viewModelScope.launch {
-                // Assuming we would schedule a notification here if implemented
+                // 🌟 FIX 2: Ensure TaskType.APPOINTMENT is set when constructing the Task 🌟
                 val newTask = Task(
                     title = title,
                     dueDate = date,
                     dueTime = time,
-                    isCompleted = false
+                    isCompleted = false,
+                    type = TaskType.APPOINTMENT // CRITICAL: Identify this task as an Appointment
                 )
                 repository.insertTask(newTask)
 
