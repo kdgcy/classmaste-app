@@ -1,0 +1,37 @@
+package com.kd.classmate
+
+import androidx.room.TypeConverter
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+
+class Converters {
+    // --- LocalDate Converters ---
+
+    @TypeConverter
+    fun fromLocalDate(date: LocalDate?): String? {
+        return date?.format(DateTimeFormatter.ISO_LOCAL_DATE)
+    }
+
+    @TypeConverter
+    fun toLocalDate(dateString: String?): LocalDate? {
+        return dateString?.let {
+            LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE)
+        }
+    }
+
+    // --- LocalTime Converters ---
+
+    @TypeConverter
+    fun fromLocalTime(time: LocalTime?): String? {
+        return time?.format(DateTimeFormatter.ISO_LOCAL_TIME)
+    }
+
+    @TypeConverter
+    fun toLocalTime(timeString: String?): LocalTime? {
+        // We use a simple formatter and truncate to minutes for safety in database storage
+        return timeString?.let {
+            LocalTime.parse(it, DateTimeFormatter.ISO_LOCAL_TIME)
+        }
+    }
+}

@@ -1,23 +1,20 @@
-// File: AppDatabase.kt (CRASH FIX)
-
 package com.kd.classmate.data
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.kd.classmate.data.subtaskdata.Subtask // Ensure this import is correct
+import androidx.room.TypeConverters
+import com.kd.classmate.Converters
+import com.kd.classmate.data.subtaskdata.Subtask
 
-/**
- * The Room Database for the Classmate app.
- * Version 2 now includes the Subtask entity.
- */
-// Ensure entities and version are correct
-@Database(entities = [Task::class, Subtask::class], version = 2, exportSchema = false)
+@TypeConverters(Converters::class)
+// 2. Add Subtask::class and INCREMENT VERSION to 3
+@Database(entities = [Task::class, Subtask::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun taskDao(): TaskDao
-    abstract fun subtaskDao(): com.kd.classmate.data.subtaskdata.SubtaskDao // Use full path for SubtaskDao
+    abstract fun subtaskDao(): com.kd.classmate.data.subtaskdata.SubtaskDao
 
     // --- Singleton Setup ---
     companion object {
@@ -27,7 +24,7 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(context: Context): AppDatabase {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, AppDatabase::class.java, "classmate_database")
-                    // 💥 FIX: Add the destructive migration fallback here 💥
+                    // Destructive migration is required for version change 2 -> 3
                     .fallbackToDestructiveMigration()
                     .build()
                     .also { Instance = it }

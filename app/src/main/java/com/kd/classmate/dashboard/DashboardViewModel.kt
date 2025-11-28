@@ -23,21 +23,18 @@ data class DashboardUiState(
     val selectedTime: LocalTime? = null,
     val isDatePickerVisible: Boolean = false,
     val isTimePickerVisible: Boolean = false,
-    // NEW: State for the task currently being long-pressed (Context Menu)
     val taskInContext: Task? = null
 )
 
 class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
 
-    // Internal mutable state flows (CLEANED UP)
+    // Internal mutable state flows
     private val _isAddDialogVisible = MutableStateFlow(false)
     private val _newTaskTitleInput = MutableStateFlow("")
-    // Internal Date/Time flows
     private val _selectedDate = MutableStateFlow<LocalDate?>(null)
     private val _selectedTime = MutableStateFlow<LocalTime?>(null)
     private val _isDatePickerVisible = MutableStateFlow(false)
     private val _isTimePickerVisible = MutableStateFlow(false)
-    // NEW: Context Menu State
     private val _taskInContext = MutableStateFlow<Task?>(null)
 
     val uiState: StateFlow<DashboardUiState> = repository.getAllTasks()
@@ -62,18 +59,16 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
         .combine(_isTimePickerVisible) { uiState, isVisible ->
             uiState.copy(isTimePickerVisible = isVisible)
         }
-        // NEW COMBINE: Context Menu State
         .combine(_taskInContext) { uiState, task ->
             uiState.copy(taskInContext = task)
         }
-        // -----------------------------------------------------------------
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = DashboardUiState()
         )
 
-    // --- NEW: Context Menu Functions ---
+    // ---  Context Menu Functions ---
 
     fun setTaskInContext(task: Task?) {
         _taskInContext.value = task
@@ -114,7 +109,6 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
     }
 
     // --- CRUD Functions ---
-
     // CREATE (C)
     fun addTask() {
         val title = _newTaskTitleInput.value.trim()
@@ -123,8 +117,11 @@ class DashboardViewModel(private val repository: TaskRepository) : ViewModel() {
 
         if (title.isNotEmpty()) {
             viewModelScope.launch {
-                // val newTask = Task(title = title, dueDate = date, dueTime = time) // Placeholder until Task is updated
-                val newTask = Task(title = title)
+                val newTask = Task(
+                    title = title,
+                    dueDate = date,
+                    dueTime = time
+                )
                 repository.insertTask(newTask)
 
                 setAddDialogVisibility(false)
