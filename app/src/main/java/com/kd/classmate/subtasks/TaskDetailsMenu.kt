@@ -26,7 +26,8 @@ fun TaskDetailsMenu(
     navController: NavController,
     task: Task?,
     onStartEdit: () -> Unit,
-    onDelete: () -> Unit // This now shows the confirmation dialog
+    onDelete: () -> Unit,
+    onSetReminder: (Boolean) -> Unit // 🌟 NEW HANDLER 🌟
 ) {
     var expanded by remember { mutableStateOf(false) }
     if(task==null) return
@@ -57,6 +58,7 @@ fun TaskDetailsMenu(
                 }
             )
 
+            // 🌟 FIX: Set Reminder Action 🌟
             DropdownMenuItem(
                 text = { Text("Set reminder") },
                 leadingIcon = {
@@ -67,6 +69,8 @@ fun TaskDetailsMenu(
                 },
                 onClick = {
                     expanded = false
+                    // FIX: Call the ViewModel handler to show the Date Picker
+                    onSetReminder(true)
                 }
             )
 
@@ -78,14 +82,13 @@ fun TaskDetailsMenu(
                         color = MaterialTheme.colorScheme.error) },
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = null
                     )
                 },
                 onClick = {
                     expanded = false
-                    onDelete() // Trigger the confirmation dialog
+                    onDelete()
                 }
             )
         }

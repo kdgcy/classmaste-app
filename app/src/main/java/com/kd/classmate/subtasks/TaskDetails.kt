@@ -43,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +60,7 @@ import com.kd.classmate.components.EditSubtaskDialog
 import com.kd.classmate.components.EditTaskDialog
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.kd.classmate.components.DateTimePickerDialogs
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -71,7 +73,21 @@ fun TaskDetails(
         parameters = { parametersOf(taskId) }
     )
     val uiState = viewModel.uiState.collectAsState().value
+
+    // 🌟 NEW: Date/Time Picker Hosting 🌟
+    DateTimePickerDialogs(
+        isDatePickerVisible = uiState.isDatePickerVisible,
+        isTimePickerVisible = uiState.isTimePickerVisible,
+        onDatePickerVisibilityChange = viewModel::setDatePickerVisibility,
+        onTimePickerVisibilityChange = viewModel::setTimePickerVisibility,
+        onDateSelected = viewModel::updateSelectedDate,
+        onTimeSelected = viewModel::updateSelectedTime,
+        initialDate = uiState.selectedDate
+    )
+
     var revealedSubtaskId by remember { mutableStateOf<Int?>(null) }
+    var currentSwipedItemId by remember { mutableStateOf<Int?>(null) }
+    val currentRevealedId by rememberUpdatedState(currentSwipedItemId)
 
     // --- DIALOGS HOSTING ---
     if (uiState.isEditDialogVisible && uiState.task != null) {
@@ -134,7 +150,9 @@ fun TaskDetails(
                         navController = navController,
                         task = uiState.task,
                         onStartEdit = viewModel::startEdit,
-                        onDelete = viewModel::showDeleteConfirmation
+                        onDelete = viewModel::showDeleteConfirmation,
+                        // 🌟 NEW HANDLER PASSED TO MENU 🌟
+                        onSetReminder = viewModel::setDatePickerVisibility
                     )
                 }
             )

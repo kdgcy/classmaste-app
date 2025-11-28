@@ -12,8 +12,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import java.time.LocalDate
+import java.time.LocalTime
 
-// Define the UI state
+// Define the UI state (UPDATED)
 data class TaskDetailsUiState(
     val task: Task? = null,
     val title: String = "Loading...",
@@ -27,10 +30,16 @@ data class TaskDetailsUiState(
     val isSubtaskAddDialogVisible: Boolean = false,
     val newSubtaskTitleInput: String = "",
 
-    // NEW: Subtask Edit States
+    // Subtask Edit States
     val subtaskBeingEdited: Subtask? = null,
     val isSubtaskEditDialogVisible: Boolean = false,
-    val editSubtaskTitleInput: String = ""
+    val editSubtaskTitleInput: String = "",
+
+    // 🌟 NEW: Date/Time Picker State 🌟
+    val isDatePickerVisible: Boolean = false,
+    val isTimePickerVisible: Boolean = false,
+    val selectedDate: LocalDate? = null,
+    val selectedTime: LocalTime? = null,
 )
 
 class TaskDetailsViewModel(
@@ -50,10 +59,16 @@ class TaskDetailsViewModel(
     private val _isSubtaskAddDialogVisible = MutableStateFlow(false)
     private val _newSubtaskTitleInput = MutableStateFlow("")
 
-    // NEW: Internal flows for Subtask Edit
+    // Internal flows for Subtask Edit
     private val _subtaskBeingEdited = MutableStateFlow<Subtask?>(null)
     private val _isSubtaskEditDialogVisible = MutableStateFlow(false)
     private val _editSubtaskTitleInput = MutableStateFlow("")
+
+    // 🌟 NEW: Internal Date/Time flows 🌟
+    private val _isDatePickerVisible = MutableStateFlow(false)
+    private val _isTimePickerVisible = MutableStateFlow(false)
+    private val _selectedDate = MutableStateFlow<LocalDate?>(null)
+    private val _selectedTime = MutableStateFlow<LocalTime?>(null)
 
 
     // Combine flows into the public StateFlow
@@ -62,7 +77,9 @@ class TaskDetailsViewModel(
         listOf(
             _taskFlow, _isEditDialogVisible, _editTaskTitleInput, _isDeleteConfirmationVisible,
             _subtaskListFlow, _isSubtaskAddDialogVisible, _newSubtaskTitleInput,
-            _subtaskBeingEdited, _isSubtaskEditDialogVisible, _editSubtaskTitleInput // NEW FLOWS
+            _subtaskBeingEdited, _isSubtaskEditDialogVisible, _editSubtaskTitleInput,
+            // NEW FLOWS COMBINED HERE
+            _isDatePickerVisible, _isTimePickerVisible, _selectedDate, _selectedTime
         )
     ) { args ->
         TaskDetailsUiState(
@@ -75,11 +92,15 @@ class TaskDetailsViewModel(
             subtaskList = args[4] as List<Subtask>,
             isSubtaskAddDialogVisible = args[5] as Boolean,
             newSubtaskTitleInput = args[6] as String,
-
-            // NEW Subtask Edit State Initialization
             subtaskBeingEdited = args[7] as Subtask?,
             isSubtaskEditDialogVisible = args[8] as Boolean,
-            editSubtaskTitleInput = args[9] as String
+            editSubtaskTitleInput = args[9] as String,
+
+            // NEW State Initialization
+            isDatePickerVisible = args[10] as Boolean,
+            isTimePickerVisible = args[11] as Boolean,
+            selectedDate = args[12] as LocalDate?,
+            selectedTime = args[13] as LocalTime?
         )
     }.stateIn(
         scope = viewModelScope,
@@ -95,6 +116,56 @@ class TaskDetailsViewModel(
 
         viewModelScope.launch {
             subtaskRepository.getSubtasksForTask(taskId).collect { subtasks -> _subtaskListFlow.value = subtasks }
+        }
+
+        // 🌟 NEW: Populate initial date/time from the task once loaded 🌟
+        viewModelScope.launch {
+            _taskFlow.collect { task ->
+                if (task != null) {
+                    _selectedDate.value = task.dueDate
+                    _selectedTime.value = task.dueTime
+                }
+            }
+        }
+    }
+
+    // --- 🌟 NEW: Date/Time Update Functions 🌟 ---
+
+    fun setDatePickerVisibility(isVisible: Boolean) {
+        _isDatePickerVisible.value = isVisible
+    }
+
+    fun setTimePickerVisibility(isVisible: Boolean) {
+        _isTimePickerVisible.value = isVisible
+    }
+
+    fun updateSelectedDate(date: LocalDate) {
+        _selectedDate.value = date
+        // Smooth transition to Time Picker
+        if (_selectedTime.value == null) {
+            viewModelScope.launch {
+                delay(300L)
+                setTimePickerVisibility(true)
+            }
+        }
+    }
+
+    fun updateSelectedTime(time: LocalTime) {
+        _selectedTime.value = time
+        saveDueDateAndTime() // Save to DB after time is set
+    }
+
+    private fun saveDueDateAndTime() {
+        val task = _taskFlow.value ?: return
+        val date = _selectedDate.value
+        val time = _selectedTime.value
+
+        // Only save if a change was made
+        if (date != task.dueDate || time != task.dueTime) {
+            viewModelScope.launch {
+                val updatedTask = task.copy(dueDate = date, dueTime = time)
+                repository.updateTask(updatedTask)
+            }
         }
     }
 
