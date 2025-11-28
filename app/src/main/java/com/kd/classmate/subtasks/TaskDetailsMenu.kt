@@ -83,7 +83,8 @@ fun TaskDetailsMenu(
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Filled.Delete,
-                        contentDescription = null
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
                     )
                 },
                 onClick = {

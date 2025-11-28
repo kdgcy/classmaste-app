@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.kd.classmate.calendar.Calendar
 import com.kd.classmate.dashboard.Dashboard
+import com.kd.classmate.pomodoro.Pomodoro
 import com.kd.classmate.subtasks.TaskDetails
 import com.kd.classmate.utils.Routes
 
@@ -48,6 +49,7 @@ fun AppNavigation(){
         // Dashboard
         composable(Routes.dashboard) { Dashboard(navController) }
         composable(Routes.calendar) { Calendar(navController) }
+        composable(Routes.pomodoro) { Pomodoro(navController) }
 
         // TaskDetails
         composable(

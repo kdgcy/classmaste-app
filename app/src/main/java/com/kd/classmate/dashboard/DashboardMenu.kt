@@ -36,7 +36,6 @@ fun DashboardMenu(navController: NavController) {
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
-            // Removed hardcoded width for natural Material 3 sizing
         ) {
             // 1. Calendar OPTION
             DropdownMenuItem(
@@ -58,12 +57,13 @@ fun DashboardMenu(navController: NavController) {
                 text = { Text("Focus Mode") },
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Filled.Timer, // Better context than 'Alarm'
+                        imageVector = Icons.Filled.Timer,
                         contentDescription = null
                     )
                 },
                 onClick = {
                     expanded = false
+                    navController.navigate(Routes.pomodoro)
                 }
             )
 
