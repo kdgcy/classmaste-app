@@ -7,6 +7,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,9 +34,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -67,6 +71,7 @@ fun TaskDetails(
         parameters = { parametersOf(taskId) }
     )
     val uiState = viewModel.uiState.collectAsState().value
+    var revealedSubtaskId by remember { mutableStateOf<Int?>(null) }
 
     // --- DIALOGS HOSTING ---
     if (uiState.isEditDialogVisible && uiState.task != null) {
@@ -149,7 +154,15 @@ fun TaskDetails(
         LazyColumn(modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            // DETECT TAPS ON BACKGROUND/EMPTY SPACE TO CLOSE DELETE ICON
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        revealedSubtaskId = null
+                    }
+                )
+            },
             contentPadding = PaddingValues(bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
             // Subtask List with SWIPE-TO-DELETE
@@ -157,29 +170,39 @@ fun TaskDetails(
                 // The visibility toggle is still needed for the smooth exit animation
                 var isVisible by remember { mutableStateOf(true) }
 
-                // 1. SwipeToDismissBox State
                 val dismissState = rememberSwipeToDismissBoxState(
-                    // FIX: Confirm value change must be removed or always return false
-                    // We remove it entirely to prevent automatic dismissal.
+                    confirmValueChange = { newValue ->
+                        if (newValue == SwipeToDismissBoxValue.EndToStart) {
+                            // If user swipes this row, mark it as the revealed one
+                            revealedSubtaskId = subtask.id
+                            true
+                        } else {
+                            // If they swipe back to close, clear the id
+                            if (revealedSubtaskId == subtask.id) {
+                                revealedSubtaskId = null
+                            }
+                            true
+                        }
+                    }
                 )
 
-                // LaunchedEffect is removed, as deletion happens on button click.
-
-                // 3. Animated Visibility Wrapper
+                // THE MAGIC: CLOSE THIS ROW IF ANOTHER IS OPENED OR BACKGROUND TAPPED
+                LaunchedEffect(revealedSubtaskId) {
+                    if (revealedSubtaskId != subtask.id && dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+                        dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+                    }
+                }
                 AnimatedVisibility(
                     visible = isVisible,
                     exit = shrinkVertically(tween(300)) + fadeOut(tween(300))
                 ){
-                    // 4. SwipeToDismissBox Composable
                     SwipeToDismissBox(
                         state = dismissState,
-                        enableDismissFromStartToEnd = false, // Only allow swipe from EndToStart
+                        enableDismissFromStartToEnd = false,
                         backgroundContent = {
-                            // Calculate scale based on swipe progress (from 0 to 1)
                             val progress = dismissState.progress
                             val scale = Math.min(1f, progress)
 
-                            // FIX: Background is now a clickable icon button
                             Box(
                                 Modifier
                                     .fillMaxSize()
@@ -189,13 +212,14 @@ fun TaskDetails(
                             ) {
                                 IconButton(
                                     onClick = {
-                                        // 💥 NEW LOGIC: Click the button to perform delete 💥
-                                        isVisible = false // Trigger smooth exit animation
-                                        viewModel.deleteSubtask(subtask) // Delete from database
+                                        isVisible = false
+                                        viewModel.deleteSubtask(subtask)
+                                        // Reset revealed ID after deletion
+                                        if (revealedSubtaskId == subtask.id) revealedSubtaskId = null
                                     },
                                     modifier = Modifier
                                         .size(48.dp)
-                                        .scale(scale) // Scale the icon/circle based on swipe progress
+                                        .scale(scale)
                                         .background(
                                             color = MaterialTheme.colorScheme.error,
                                             shape = CircleShape
@@ -209,17 +233,22 @@ fun TaskDetails(
                                 }
                             }
                         },
-                        // The actual content to be swiped
                         content = {
-                            // Subtask Row Content
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .combinedClickable(
                                         onClick = {
-                                            viewModel.updateSubtaskCompletion(subtask, !subtask.isCompleted)
+                                            // IF USER TAPS THE ROW CONTENT, ALSO CLOSE THE DELETE ICON
+                                            if (revealedSubtaskId != null) {
+                                                revealedSubtaskId = null
+                                            } else {
+                                                viewModel.updateSubtaskCompletion(subtask, !subtask.isCompleted)
+                                            }
                                         },
                                         onLongClick = {
+                                            // Close delete icon before opening edit dialog
+                                            revealedSubtaskId = null
                                             viewModel.startEditSubtask(subtask)
                                         }
                                     )
@@ -230,6 +259,8 @@ fun TaskDetails(
                                 Checkbox(
                                     checked = subtask.isCompleted,
                                     onCheckedChange = { isChecked ->
+                                        // Close delete icon if checking the box
+                                        revealedSubtaskId = null
                                         viewModel.updateSubtaskCompletion(subtask, isChecked)
                                     }
                                 )
