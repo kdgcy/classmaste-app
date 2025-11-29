@@ -81,6 +81,7 @@ fun DashboardMenu(navController: NavController) {
                 },
                 onClick = {
                     expanded = false
+                    navController.navigate(Routes.appsettings)
                 }
             )
         }
