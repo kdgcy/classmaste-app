@@ -16,6 +16,8 @@ import org.koin.dsl.module
 import com.kd.classmate.data.PreferenceManager
 import com.kd.classmate.data.PreferenceManagerImpl
 import com.kd.classmate.appsetting.AppSettingsViewModel
+import com.kd.classmate.services.SoundPlayer
+import com.kd.classmate.services.SoundPlayerImpl
 
 val appModule = module {
 
@@ -28,6 +30,7 @@ val appModule = module {
     single<NotificationScheduler> { NotificationSchedulerImpl(androidContext()) }
     single<WakeLockManager> { WakeLockManagerImpl(androidContext()) }
     single<PreferenceManager> { PreferenceManagerImpl(androidContext()) }
+    single<SoundPlayer> { SoundPlayerImpl(androidContext()) }
 
 
 // --- ViewModel Dependencies ---
@@ -40,11 +43,11 @@ val appModule = module {
         )
     }
 
-    // FIX: CalendarViewModel
+    // CalendarViewModel
     viewModel {
         CalendarViewModel(
-            repository = get(), // TaskRepository (1st dependency)
-            notificationScheduler = get() // NotificationScheduler (2nd dependency, required for scheduling alarms)
+            repository = get(),
+            notificationScheduler = get()
         )
     }
 
@@ -53,7 +56,7 @@ val appModule = module {
     viewModel {
         PomodoroViewModel(
             wakeLockManager = get(),
-            context = androidContext() // Inject Application Context for service binding
+            context = androidContext() // Inject Application Context for service binding and to prevent memory leak
         )
     }
 

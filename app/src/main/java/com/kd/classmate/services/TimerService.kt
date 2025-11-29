@@ -1,6 +1,5 @@
 package com.kd.classmate.services
 
-// 🌟 FIX: Add missing imports for LOCALE and PowerManager 🌟
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -24,6 +23,11 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import com.kd.classmate.pomodoro.PomodoroSettings
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject // Required for Service Locator Pattern
+import org.koin.android.ext.android.get
+import org.koin.android.ext.android.get // Required for manual dependency retrieval
+import com.kd.classmate.data.PreferenceManager// Required for manual dependency retrieval
 
 // These constants must be defined outside the class body if they are top-level constants.
 private var WORK_TIME_MINUTES = 25L
@@ -40,13 +44,14 @@ data class ServiceTimerState(
     val workCyclesCompleted: Int = 0
 )
 
-class TimerService : LifecycleService() {
+class TimerService : LifecycleService(), KoinComponent {
 
     private val _timerState = MutableStateFlow(ServiceTimerState())
     val timerState = _timerState.asStateFlow()
 
     private var timerJob: Job? = null
     private lateinit var wakeLockManager: WakeLockManager
+    private lateinit var soundPlayer: SoundPlayer
 
     //  NEW: Internal mutable settings state
     private val _currentSettings = MutableStateFlow(PomodoroSettings())
@@ -76,8 +81,10 @@ class TimerService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
-        // 🌟 FIX: Assuming WakeLockManagerImpl takes the Application Context 🌟
-        wakeLockManager = WakeLockManagerImpl(applicationContext)
+        // 🌟 FIX 1: Manually retrieve dependencies using the service locator 🌟
+        wakeLockManager = get()
+        soundPlayer = get()
+        // PreferenceManager is accessed directly in handleCycleEnd
     }
 
     override fun onBind(intent: Intent): IBinder? {
@@ -131,12 +138,27 @@ class TimerService : LifecycleService() {
 
     // --- Cycle Logic ---
 
+    // In TimerService.kt
+
     private fun handleCycleEnd() {
         timerJob?.cancel()
         wakeLockManager.releaseWakeLock()
 
+        // 🌟 FIX: Retrieve PreferenceManager using Service Locator Pattern 🌟
+        // Note: Since TimerService implements KoinComponent, we can use the get() function.
+        val preferenceManager: PreferenceManager = get()
+
+        // Check if the user has the sound preference enabled
+        val isSoundEnabled = preferenceManager.getPomodoroSoundState().value
+
+        if (isSoundEnabled) {
+            // 🌟 FIX: Conditionally play the sound 🌟
+            soundPlayer.playCycleEndSound()
+        }
+
+
         _timerState.update { currentState ->
-            val settings = _currentSettings.value // Get current settings
+            val settings = _currentSettings.value
 
             val nextCycle = when (currentState.cycleState) {
                 CycleState.WORK -> {
@@ -146,7 +168,6 @@ class TimerService : LifecycleService() {
                 CycleState.SHORT_BREAK, CycleState.LONG_BREAK -> CycleState.WORK
             }
 
-            // Get the duration from the current settings
             val newTime = when (nextCycle) {
                 CycleState.WORK -> settings.workDurationMinutes
                 CycleState.SHORT_BREAK -> settings.shortBreakMinutes
