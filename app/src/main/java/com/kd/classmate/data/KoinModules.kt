@@ -13,6 +13,9 @@ import com.kd.classmate.subtasks.TaskDetailsViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
+import com.kd.classmate.data.PreferenceManager
+import com.kd.classmate.data.PreferenceManagerImpl
+import com.kd.classmate.appsetting.AppSettingsViewModel
 
 val appModule = module {
 
@@ -24,6 +27,9 @@ val appModule = module {
     single { SubtaskRepository(get()) }
     single<NotificationScheduler> { NotificationSchedulerImpl(androidContext()) }
     single<WakeLockManager> { WakeLockManagerImpl(androidContext()) }
+    single<PreferenceManager> { PreferenceManagerImpl(androidContext()) }
+
+
 // --- ViewModel Dependencies ---
 
     // DashboardViewModel
@@ -34,7 +40,7 @@ val appModule = module {
         )
     }
 
-    // 🌟 FIX: CalendarViewModel Definition - Removed incorrect notificationScheduler 🌟
+    // FIX: CalendarViewModel
     viewModel {
         CalendarViewModel(
             repository = get(), // TaskRepository (1st dependency)
@@ -43,7 +49,7 @@ val appModule = module {
     }
 
 
-    // PomodoroViewModel (Corrected)
+    // PomodoroViewModel
     viewModel {
         PomodoroViewModel(
             wakeLockManager = get(),
@@ -60,4 +66,7 @@ val appModule = module {
             notificationScheduler = get() // 4th
         )
     }
+
+    // AppSettingsViewModel
+    viewModel { AppSettingsViewModel(preferenceManager = get()) }
 }
