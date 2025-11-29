@@ -2,31 +2,37 @@ package com.kd.classmate.pomodoro
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.IBinder
+import com.kd.classmate.services.TimerService.TimerServiceBinder
+import com.kd.classmate.services.ServiceTimerState
+import com.kd.classmate.services.TimerService
+import com.kd.classmate.services.WakeLockManager
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import android.os.Build
 import java.util.concurrent.TimeUnit
+import android.os.PowerManager // Added back for completeness
 
-// Constants (Default Pomodoro configuration)
+// Constants (moved to service, but defined here for local state consistency)
 private const val WORK_TIME_MINUTES = 25L
-private const val SHORT_BREAK_MINUTES = 5L
-private const val LONG_BREAK_MINUTES = 15L
-private const val CYCLES_BEFORE_LONG_BREAK = 4
 
 enum class TimerState {
     RUNNING, PAUSED, IDLE
 }
-
 enum class CycleState {
     WORK, SHORT_BREAK, LONG_BREAK
 }
 
+// UI State remains the same, but data comes from the service
 data class PomodoroUiState(
     val timeRemainingSeconds: Long = TimeUnit.MINUTES.toSeconds(WORK_TIME_MINUTES),
     val timerState: TimerState = TimerState.IDLE,
@@ -34,110 +40,97 @@ data class PomodoroUiState(
     val workCyclesCompleted: Int = 0
 )
 
-class PomodoroViewModel : ViewModel() {
+class PomodoroViewModel(
+    private val wakeLockManager: WakeLockManager,
+    private val context: Context // Context is required for binding the service
+) : ViewModel() {
 
-    // Internal State Flows
-    private val _timeRemainingSeconds = MutableStateFlow(TimeUnit.MINUTES.toSeconds(WORK_TIME_MINUTES))
-    private val _timerState = MutableStateFlow(TimerState.IDLE)
-    private val _cycleState = MutableStateFlow(CycleState.WORK)
-    private val _workCyclesCompleted = MutableStateFlow(0)
+    // 1. Service Connection State
+    private val _isBound = MutableStateFlow(false)
+    private var timerService: TimerService? = null
 
-    private var timerJob: Job? = null
+    // 2. Service Timer State Flow (default/initial flow)
+    private val serviceTimerStateFlow = MutableStateFlow(ServiceTimerState())
 
-    // Combine flows into the public StateFlow
-    val uiState: StateFlow<PomodoroUiState> = combine(
-        _timeRemainingSeconds, _timerState, _cycleState, _workCyclesCompleted
-    ) { time, timerState, cycleState, cyclesCompleted ->
-        PomodoroUiState(
-            timeRemainingSeconds = time,
-            timerState = timerState,
-            cycleState = cycleState,
-            workCyclesCompleted = cyclesCompleted
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = PomodoroUiState()
-    )
+    // 3. Service Connection Object
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as TimerService.TimerServiceBinder
+            timerService = binder.getService()
 
-    // --- Core Timer Logic ---
-
-    private fun startTimer() {
-        // Cancel any existing job
-        timerJob?.cancel()
-
-        _timerState.value = TimerState.RUNNING
-
-        timerJob = viewModelScope.launch {
-            while (_timeRemainingSeconds.value > 0) {
-                delay(1000L) // Wait for 1 second
-                _timeRemainingSeconds.update { it - 1 }
-            }
-            // Timer reached 0, auto-transition to the next cycle
-            handleCycleEnd()
-        }
-    }
-
-    private fun handleCycleEnd() {
-        timerJob?.cancel()
-        _timerState.value = TimerState.IDLE
-
-        val nextCycle = when (_cycleState.value) {
-            CycleState.WORK -> {
-                _workCyclesCompleted.update { it + 1 }
-                if (_workCyclesCompleted.value % CYCLES_BEFORE_LONG_BREAK == 0) {
-                    CycleState.LONG_BREAK
-                } else {
-                    CycleState.SHORT_BREAK
+            // Collect the service's state flow
+            viewModelScope.launch {
+                timerService!!.timerState.collect { state ->
+                    serviceTimerStateFlow.value = state
                 }
             }
-            CycleState.SHORT_BREAK, CycleState.LONG_BREAK -> CycleState.WORK
+            _isBound.value = true
         }
 
-        _cycleState.value = nextCycle
-        resetTimer(shouldStart = false)
+        override fun onServiceDisconnected(name: ComponentName?) {
+            _isBound.value = false
+            timerService = null
+        }
     }
 
-    // --- Public Control Functions ---
+    init {
+        // Start and bind to the service when the ViewModel is created
+        bindService(context)
+        startService(context)
+    }
+
+    private fun bindService(context: Context) {
+        val intent = Intent(context, TimerService::class.java)
+        context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+    }
+
+    private fun startService(context: Context) {
+        val intent = Intent(context, TimerService::class.java)
+        // Use startForegroundService for API 26+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
+    }
+
+    // Combine flows into the public StateFlow (Maps service state to UI state)
+    val uiState: StateFlow<PomodoroUiState> = serviceTimerStateFlow
+        .map { serviceState ->
+            PomodoroUiState(
+                timeRemainingSeconds = serviceState.timeRemainingSeconds,
+                timerState = serviceState.timerState,
+                cycleState = serviceState.cycleState,
+                workCyclesCompleted = serviceState.workCyclesCompleted
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = PomodoroUiState()
+        )
+
+    // --- Public Control Functions (Delegate to Service) ---
 
     fun toggleTimer() {
-        when (_timerState.value) {
-            TimerState.RUNNING -> {
-                timerJob?.cancel()
-                _timerState.value = TimerState.PAUSED
-            }
-            TimerState.PAUSED, TimerState.IDLE -> {
-                startTimer()
-            }
-        }
+        timerService?.toggleTimer()
     }
 
     fun resetTimer(shouldStart: Boolean = true) {
-        timerJob?.cancel()
-
-        val newTime = when (_cycleState.value) {
-            CycleState.WORK -> WORK_TIME_MINUTES
-            CycleState.SHORT_BREAK -> SHORT_BREAK_MINUTES
-            CycleState.LONG_BREAK -> LONG_BREAK_MINUTES
-        }
-
-        _timeRemainingSeconds.value = TimeUnit.MINUTES.toSeconds(newTime)
-        _timerState.value = TimerState.IDLE
-
-        if (shouldStart) {
-            startTimer()
-        }
+        timerService?.resetTimer(shouldStart)
     }
 
-    // Reset the cycle count to zero
     fun resetCycleCount() {
-        _workCyclesCompleted.value = 0
-        _cycleState.value = CycleState.WORK
-        resetTimer(shouldStart = false)
+        // Needs logic in TimerService.kt if required
+        // timerService?.resetCycleCount()
     }
 
     override fun onCleared() {
         super.onCleared()
-        timerJob?.cancel()
+        // Unbind service when ViewModel is destroyed
+        if (_isBound.value) {
+            // FIX: Use the injected context to unbind the service
+            context.unbindService(serviceConnection)
+        }
+        timerService = null
     }
 }
