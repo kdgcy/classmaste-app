@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.kd.classmate.appsetting.AppSettings
 import com.kd.classmate.calendar.Calendar
 import com.kd.classmate.dashboard.Dashboard
 import com.kd.classmate.pomodoro.Pomodoro
@@ -20,41 +21,43 @@ import com.kd.classmate.utils.Routes
 @Composable
 fun AppNavigation(){
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = Routes.dashboard,
-        enterTransition = {
-            slideInHorizontally(
-                initialOffsetX = { it },
-                animationSpec = tween(300)
-            ) + fadeIn(tween(300))
-        },
-        exitTransition = {
-            slideOutHorizontally(
-                targetOffsetX = { -it },
-                animationSpec = tween(300)
-            ) + fadeOut(tween(300))
-        },
-        popEnterTransition = {
-            slideInHorizontally(
-                initialOffsetX = { -it },
-                animationSpec = tween(300)
-            ) + fadeIn(tween(300))
-        },
-        popExitTransition = {
-            slideOutHorizontally(
-                targetOffsetX = { it },
-                animationSpec = tween(300)
-            ) + fadeOut(tween(300))
-        }
-    ) {
-        // Dashboard
-        composable(Routes.dashboard) { Dashboard(navController) }
-        composable(Routes.calendar) { Calendar(navController) }
-        composable(Routes.pomodoro) { Pomodoro(navController) }
+    NavHost(navController = navController, startDestination = Routes.splash,) {
+
+        composable(
+            Routes.splash,
+            enterTransition = {fadeIn(tween(100)) },
+            exitTransition = {fadeOut(tween(100)) }
+        ){ SplashScreen(navController) }
+        composable(
+            Routes.dashboard,
+            enterTransition = {fadeIn(tween(100)) },
+            exitTransition = {fadeOut(tween(100)) }
+        ) { Dashboard(navController) }
+
+        composable(
+            Routes.calendar,
+            enterTransition = {fadeIn(tween(100)) },
+            exitTransition = {fadeOut(tween(100)) }
+        ) { Calendar(navController) }
+
+        composable(
+            Routes.pomodoro,
+            enterTransition = {fadeIn(tween(100)) },
+            exitTransition = {fadeOut(tween(100)) }
+        ) { Pomodoro(navController) }
+
+        composable(
+            Routes.appsettings,
+            enterTransition = {fadeIn(tween(100)) },
+            exitTransition = {fadeOut(tween(100)) }
+        ) { AppSettings(navController) }
 
         // TaskDetails
         composable(
             route = Routes.taskDetails,
-            arguments = listOf(navArgument("taskId") { type = NavType.IntType })
+            arguments = listOf(navArgument("taskId") { type = NavType.IntType }),
+            enterTransition = {fadeIn(tween(100)) },
+            exitTransition = {fadeOut(tween(100)) }
         ) { backStackEntry ->
             val taskId = backStackEntry.arguments?.getInt("taskId")
             if (taskId != null) {
