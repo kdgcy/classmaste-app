@@ -39,7 +39,7 @@ object NotificationPublisher {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(iconId)
-            .setContentTitle("Task Due Soon!")
+            .setContentTitle("Reminder")
             .setContentText(title)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true) // Dismisses notification when tapped

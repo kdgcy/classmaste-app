@@ -5,7 +5,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service.START_STICKY
 import android.content.Intent
 import android.os.Binder
 import android.os.Build
@@ -24,11 +23,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import com.kd.classmate.pomodoro.PomodoroSettings
 
-// Constants (These must be defined and accessible)
-private const val WORK_TIME_MINUTES = 25L
-private const val SHORT_BREAK_MINUTES = 5L
-private const val LONG_BREAK_MINUTES = 15L
+// These constants must be defined outside the class body if they are top-level constants.
+private var WORK_TIME_MINUTES = 25L
+private var SHORT_BREAK_MINUTES = 5L
+private var LONG_BREAK_MINUTES = 15L
 private const val CYCLES_BEFORE_LONG_BREAK = 4
 private const val NOTIFICATION_ID = 101
 
@@ -48,9 +48,28 @@ class TimerService : LifecycleService() {
     private var timerJob: Job? = null
     private lateinit var wakeLockManager: WakeLockManager
 
+    //  NEW: Internal mutable settings state
+    private val _currentSettings = MutableStateFlow(PomodoroSettings())
+
     // Binder implementation for connecting to the ViewModel
     inner class TimerServiceBinder : Binder() {
         fun getService(): TimerService = this@TimerService
+    }
+
+    // --- 🌟 NEW: Settings Update Function 🌟
+    fun updateSettings(work: Long, shortBreak: Long, longBreak: Long) {
+        _currentSettings.update {
+            it.copy(
+                workDurationMinutes = work,
+                shortBreakMinutes = shortBreak,
+                longBreakMinutes = longBreak
+            )
+        }
+
+        // Force a timer reset to apply the new duration immediately if the timer is not running
+        if (_timerState.value.timerState != TimerState.RUNNING) {
+            resetTimer(shouldStart = false)
+        }
     }
 
     // --- Lifecycle Overrides ---
@@ -117,6 +136,8 @@ class TimerService : LifecycleService() {
         wakeLockManager.releaseWakeLock()
 
         _timerState.update { currentState ->
+            val settings = _currentSettings.value // Get current settings
+
             val nextCycle = when (currentState.cycleState) {
                 CycleState.WORK -> {
                     val newCycles = currentState.workCyclesCompleted + 1
@@ -125,10 +146,11 @@ class TimerService : LifecycleService() {
                 CycleState.SHORT_BREAK, CycleState.LONG_BREAK -> CycleState.WORK
             }
 
+            // Get the duration from the current settings
             val newTime = when (nextCycle) {
-                CycleState.WORK -> WORK_TIME_MINUTES
-                CycleState.SHORT_BREAK -> SHORT_BREAK_MINUTES
-                CycleState.LONG_BREAK -> LONG_BREAK_MINUTES
+                CycleState.WORK -> settings.workDurationMinutes
+                CycleState.SHORT_BREAK -> settings.shortBreakMinutes
+                CycleState.LONG_BREAK -> settings.longBreakMinutes
             }
 
             currentState.copy(
@@ -146,11 +168,13 @@ class TimerService : LifecycleService() {
         timerJob?.cancel()
         wakeLockManager.releaseWakeLock()
 
+        val settings = _currentSettings.value // Get current settings
+
         _timerState.update { currentState ->
             val newTime = when (currentState.cycleState) {
-                CycleState.WORK -> WORK_TIME_MINUTES
-                CycleState.SHORT_BREAK -> SHORT_BREAK_MINUTES
-                CycleState.LONG_BREAK -> LONG_BREAK_MINUTES
+                CycleState.WORK -> settings.workDurationMinutes
+                CycleState.SHORT_BREAK -> settings.shortBreakMinutes
+                CycleState.LONG_BREAK -> settings.longBreakMinutes
             }
             currentState.copy(
                 timerState = TimerState.IDLE,

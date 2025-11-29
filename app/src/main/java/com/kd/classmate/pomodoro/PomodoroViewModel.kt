@@ -1,29 +1,25 @@
 package com.kd.classmate.pomodoro
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.os.Build
 import android.os.IBinder
-import com.kd.classmate.services.TimerService.TimerServiceBinder
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.kd.classmate.services.ServiceTimerState
 import com.kd.classmate.services.TimerService
 import com.kd.classmate.services.WakeLockManager
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import android.os.Build
 import java.util.concurrent.TimeUnit
-import android.os.PowerManager // Added back for completeness
-
-// Constants (moved to service, but defined here for local state consistency)
-private const val WORK_TIME_MINUTES = 25L
 
 enum class TimerState {
     RUNNING, PAUSED, IDLE
@@ -33,17 +29,38 @@ enum class CycleState {
 }
 
 // UI State remains the same, but data comes from the service
-data class PomodoroUiState(
-    val timeRemainingSeconds: Long = TimeUnit.MINUTES.toSeconds(WORK_TIME_MINUTES),
+data class ServiceTimerState(
+    val timeRemainingSeconds: Long = TimeUnit.MINUTES.toSeconds(25L), // Default value
     val timerState: TimerState = TimerState.IDLE,
     val cycleState: CycleState = CycleState.WORK,
     val workCyclesCompleted: Int = 0
 )
+// Data class to hold the persistent user settings
+data class PomodoroSettings(
+    val workDurationMinutes: Long = 25L,
+    val shortBreakMinutes: Long = 5L,
+    val longBreakMinutes: Long = 15L
+)
+
+// 🌟 FIX: Removed the duplicate declaration of PomodoroUiState (Line 44 & 54) 🌟
+data class PomodoroUiState(
+    val timeRemainingSeconds: Long = TimeUnit.MINUTES.toSeconds(25L),
+    val timerState: TimerState = TimerState.IDLE,
+    val cycleState: CycleState = CycleState.WORK,
+    val workCyclesCompleted: Int = 0,
+    // 🌟 NEW: Settings State 🌟
+    val settings: PomodoroSettings = PomodoroSettings(),
+    val isSettingsDialogVisible: Boolean = false
+)
 
 class PomodoroViewModel(
     private val wakeLockManager: WakeLockManager,
-    private val context: Context // Context is required for binding the service
+    private val context: Context
 ) : ViewModel() {
+
+    // --- Settings and UI State Flows ---
+    private val _settings = MutableStateFlow(PomodoroSettings())
+    private val _isSettingsDialogVisible = MutableStateFlow(false)
 
     // 1. Service Connection State
     private val _isBound = MutableStateFlow(false)
@@ -96,18 +113,43 @@ class PomodoroViewModel(
 
     // Combine flows into the public StateFlow (Maps service state to UI state)
     val uiState: StateFlow<PomodoroUiState> = serviceTimerStateFlow
-        .map { serviceState ->
+        .combine(_settings) { serviceState, settings ->
+            serviceState to settings
+        }
+        .combine(_isSettingsDialogVisible) { (serviceState, settings), isVisible ->
             PomodoroUiState(
                 timeRemainingSeconds = serviceState.timeRemainingSeconds,
                 timerState = serviceState.timerState,
                 cycleState = serviceState.cycleState,
-                workCyclesCompleted = serviceState.workCyclesCompleted
+                workCyclesCompleted = serviceState.workCyclesCompleted,
+                settings = settings,
+                isSettingsDialogVisible = isVisible
             )
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = PomodoroUiState()
         )
+
+    // --- 🌟 NEW: Settings Management Functions 🌟 ---
+
+    fun setSettingsDialogVisibility(isVisible: Boolean) {
+        _isSettingsDialogVisible.value = isVisible
+    }
+
+    fun updateSettings(work: Long, shortBreak: Long, longBreak: Long) {
+        _settings.update {
+            it.copy(
+                workDurationMinutes = work,
+                shortBreakMinutes = shortBreak,
+                longBreakMinutes = longBreak
+            )
+        }
+        // 🌟 FIX: Call the service function to update settings 🌟
+        // The service function updateSettings must be defined in TimerService.kt
+        timerService?.updateSettings(work, shortBreak, longBreak)
+        setSettingsDialogVisibility(false)
+    }
 
     // --- Public Control Functions (Delegate to Service) ---
 

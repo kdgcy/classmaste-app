@@ -1,7 +1,6 @@
 package com.kd.classmate.pomodoro
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,9 +37,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.kd.classmate.components.PomodoroSettingsDialog
 import org.koin.androidx.compose.koinViewModel
 import java.util.concurrent.TimeUnit
-import androidx.compose.ui.graphics.Color // Ensure Color is imported
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,9 +54,10 @@ fun Pomodoro(navController: NavController) {
     val formattedTime = String.format("%02d:%02d", minutes, seconds)
 
     val totalTimeSeconds = when (uiState.cycleState) {
-        CycleState.WORK -> TimeUnit.MINUTES.toSeconds(25L)
-        CycleState.SHORT_BREAK -> TimeUnit.MINUTES.toSeconds(5L)
-        CycleState.LONG_BREAK -> TimeUnit.MINUTES.toSeconds(15L)
+        // Use dynamic settings from uiState
+        CycleState.WORK -> TimeUnit.MINUTES.toSeconds(uiState.settings.workDurationMinutes)
+        CycleState.SHORT_BREAK -> TimeUnit.MINUTES.toSeconds(uiState.settings.shortBreakMinutes)
+        CycleState.LONG_BREAK -> TimeUnit.MINUTES.toSeconds(uiState.settings.longBreakMinutes)
     }
 
     val progress = uiState.timeRemainingSeconds.toFloat() / totalTimeSeconds.toFloat()
@@ -78,8 +78,14 @@ fun Pomodoro(navController: NavController) {
         animationSpec = tween(durationMillis = 500)
     )
 
-    // ❌ Removed the unnecessary timerAnimationSpec variable
-
+    // --- 🌟 NEW: Settings Dialog Hosting 🌟 ---
+    if (uiState.isSettingsDialogVisible) {
+        PomodoroSettingsDialog(
+            currentSettings = uiState.settings,
+            onSave = viewModel::updateSettings,
+            onDismiss = { viewModel.setSettingsDialogVisibility(false) }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -91,7 +97,7 @@ fun Pomodoro(navController: NavController) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO: Open Settings */ }) {
+                    IconButton(onClick = { viewModel.setSettingsDialogVisibility(true) }) {
                         Icon(imageVector = Icons.Filled.Settings,contentDescription = null)
                     }
                 }
@@ -129,14 +135,13 @@ fun Pomodoro(navController: NavController) {
                     strokeWidth = 10.dp
                 )
 
-                // Foreground Progress Ring (Dynamic) - FIX: Removed invalid parameter
+                // Foreground Progress Ring (Dynamic)
                 CircularProgressIndicator(
                     progress = progress,
                     modifier = Modifier.size(280.dp),
                     color = ringColor,
                     strokeWidth = 10.dp,
                     strokeCap = StrokeCap.Round
-                    // 💥 FIX: animationSpec is removed 💥
                 )
 
                 // Time and Status Text
