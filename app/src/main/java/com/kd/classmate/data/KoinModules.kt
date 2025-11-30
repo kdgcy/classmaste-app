@@ -13,8 +13,6 @@ import com.kd.classmate.subtasks.TaskDetailsViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
-import com.kd.classmate.data.PreferenceManager
-import com.kd.classmate.data.PreferenceManagerImpl
 import com.kd.classmate.appsetting.AppSettingsViewModel
 import com.kd.classmate.services.SoundPlayer
 import com.kd.classmate.services.SoundPlayerImpl
@@ -27,7 +25,12 @@ val appModule = module {
     single { get<AppDatabase>().subtaskDao() }
     single { TaskRepository(get()) }
     single { SubtaskRepository(get()) }
-    single<NotificationScheduler> { NotificationSchedulerImpl(androidContext()) }
+    single<NotificationScheduler> {
+        NotificationSchedulerImpl(
+            context = androidContext(),
+            preferenceManager = get() // Inject the PreferenceManager here
+        )
+    }
     single<WakeLockManager> { WakeLockManagerImpl(androidContext()) }
     single<PreferenceManager> { PreferenceManagerImpl(androidContext()) }
     single<SoundPlayer> { SoundPlayerImpl(androidContext()) }

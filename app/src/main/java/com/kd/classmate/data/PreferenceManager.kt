@@ -7,27 +7,27 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 interface PreferenceManager {
-    fun getPomodoroSoundState(): StateFlow<Boolean>
-    fun setPomodoroSoundState(enabled: Boolean)
+    //  NEW: Master Switch
+    fun getMasterNotificationState(): StateFlow<Boolean>
+    fun setMasterNotificationState(enabled: Boolean)
 }
 
 class PreferenceManagerImpl(context: Context) : PreferenceManager {
-    // We use the application context to prevent memory leaks
     private val prefs: SharedPreferences =
         context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
 
-    // Key for the setting
-    private val POMODORO_SOUND_KEY = "pomodoro_sound_enabled"
+    // Key for the master setting
+    private val MASTER_NOTIFICATION_KEY = "master_notification_enabled"
 
     // Default state: ON (True)
-    private val _isPomodoroSoundEnabled = MutableStateFlow(
-        prefs.getBoolean(POMODORO_SOUND_KEY, true)
+    private val _isMasterNotificationEnabled = MutableStateFlow(
+        prefs.getBoolean(MASTER_NOTIFICATION_KEY, true)
     )
 
-    override fun getPomodoroSoundState(): StateFlow<Boolean> = _isPomodoroSoundEnabled.asStateFlow()
+    override fun getMasterNotificationState(): StateFlow<Boolean> = _isMasterNotificationEnabled.asStateFlow()
 
-    override fun setPomodoroSoundState(enabled: Boolean) {
-        prefs.edit().putBoolean(POMODORO_SOUND_KEY, enabled).apply()
-        _isPomodoroSoundEnabled.value = enabled
+    override fun setMasterNotificationState(enabled: Boolean) {
+        prefs.edit().putBoolean(MASTER_NOTIFICATION_KEY, enabled).apply()
+        _isMasterNotificationEnabled.value = enabled
     }
 }

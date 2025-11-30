@@ -8,13 +8,18 @@ import android.content.Intent
 import android.os.Build
 import com.kd.classmate.data.Task
 import java.time.ZoneId
+import com.kd.classmate.data.PreferenceManager
 
 interface NotificationScheduler {
     fun schedule(task: Task)
     fun cancel(taskId: Int)
 }
 
-class NotificationSchedulerImpl(private val context: Context) : NotificationScheduler {
+class NotificationSchedulerImpl(
+    private val context: Context,
+    // 🌟 FIX 1: Correct type to PreferenceManager and make it a private property (val) 🌟
+    private val preferenceManager: PreferenceManager
+) : NotificationScheduler {
 
     private val alarmManager: AlarmManager by lazy {
         context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -49,6 +54,10 @@ class NotificationSchedulerImpl(private val context: Context) : NotificationSche
 
     override fun schedule(task: Task) {
         // ... (Existing scheduling logic remains the same) ...
+        if (!preferenceManager.getMasterNotificationState().value) {
+            return
+        }
+
         val dueDate = task.dueDate ?: return
         val dueTime = task.dueTime ?: return
         val triggerTime = dueDate.atTime(dueTime).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()

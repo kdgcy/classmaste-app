@@ -1,10 +1,10 @@
-// File: AppSettingsViewModel.kt (REVISED)
+// File: AppSettingsViewModel.kt (MODIFIED)
 
 package com.kd.classmate.appsetting
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kd.classmate.data.PreferenceManager // NEW IMPORT
+import com.kd.classmate.data.PreferenceManager
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.map
 
 // Data class to hold the necessary settings states
 data class AppSettingsUiState(
-    val isPomodoroSoundEnabled: Boolean = true
+    val isMasterNotificationEnabled: Boolean = true // NEW MASTER FIELD
 )
 
 class AppSettingsViewModel(
@@ -20,9 +20,9 @@ class AppSettingsViewModel(
 ) : ViewModel() {
 
     // Expose settings state flow by mapping the flow from the preference manager
-    val uiState: StateFlow<AppSettingsUiState> = preferenceManager.getPomodoroSoundState()
+    val uiState: StateFlow<AppSettingsUiState> = preferenceManager.getMasterNotificationState()
         .map { isEnabled ->
-            AppSettingsUiState(isPomodoroSoundEnabled = isEnabled)
+            AppSettingsUiState(isMasterNotificationEnabled = isEnabled)
         }
         .stateIn(
             scope = viewModelScope,
@@ -30,8 +30,8 @@ class AppSettingsViewModel(
             initialValue = AppSettingsUiState()
         )
 
-    // Public function to toggle the setting and save it via the PreferenceManager
-    fun togglePomodoroSound(enabled: Boolean) {
-        preferenceManager.setPomodoroSoundState(enabled)
+    // Public function to toggle the master setting and save it
+    fun toggleMasterNotification(enabled: Boolean) {
+        preferenceManager.setMasterNotificationState(enabled)
     }
 }

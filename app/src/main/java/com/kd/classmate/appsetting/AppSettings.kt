@@ -47,15 +47,15 @@ fun AppSettings(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(24.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 16.dp, bottom = 16.dp)
         ) {
-            // --- 1. Productivity Settings ---
+            // --- 1. Master Notification Control ---
             item {
-                SettingsGroup("Productivity") {
-                    // 🌟 NEW: Pomodoro Sound Switch 🌟
+                SettingsGroup("Notifications & Reminders") {
+                    // 🌟 NEW: Master Switch 🌟
                     SettingsSwitch(
-                        title = "Pomodoro Timer Sound",
+                        title = "Master Notifications Switch",
                         icon = Icons.Default.NotificationsActive,
-                        checked = uiState.isPomodoroSoundEnabled,
-                        onCheckedChange = viewModel::togglePomodoroSound
+                        checked = uiState.isMasterNotificationEnabled,
+                        onCheckedChange = viewModel::toggleMasterNotification
                     )
                 }
             }

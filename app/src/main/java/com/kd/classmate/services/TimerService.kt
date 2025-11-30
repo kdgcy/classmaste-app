@@ -12,7 +12,9 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.kd.classmate.MainActivity
+import com.kd.classmate.data.PreferenceManager
 import com.kd.classmate.pomodoro.CycleState
+import com.kd.classmate.pomodoro.PomodoroSettings
 import com.kd.classmate.pomodoro.TimerState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -20,14 +22,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.get
+import org.koin.core.component.KoinComponent
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import com.kd.classmate.pomodoro.PomodoroSettings
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject // Required for Service Locator Pattern
-import org.koin.android.ext.android.get
-import org.koin.android.ext.android.get // Required for manual dependency retrieval
-import com.kd.classmate.data.PreferenceManager// Required for manual dependency retrieval
+
 
 // These constants must be defined outside the class body if they are top-level constants.
 private var WORK_TIME_MINUTES = 25L
@@ -52,8 +51,8 @@ class TimerService : LifecycleService(), KoinComponent {
     private var timerJob: Job? = null
     private lateinit var wakeLockManager: WakeLockManager
     private lateinit var soundPlayer: SoundPlayer
+    private lateinit var preferenceManager: PreferenceManager
 
-    //  NEW: Internal mutable settings state
     private val _currentSettings = MutableStateFlow(PomodoroSettings())
 
     // Binder implementation for connecting to the ViewModel
@@ -81,10 +80,9 @@ class TimerService : LifecycleService(), KoinComponent {
 
     override fun onCreate() {
         super.onCreate()
-        // 🌟 FIX 1: Manually retrieve dependencies using the service locator 🌟
         wakeLockManager = get()
         soundPlayer = get()
-        // PreferenceManager is accessed directly in handleCycleEnd
+        preferenceManager = get() // 🌟 FIX: Retrieve PreferenceManager here 🌟
     }
 
     override fun onBind(intent: Intent): IBinder? {
@@ -144,16 +142,18 @@ class TimerService : LifecycleService(), KoinComponent {
         timerJob?.cancel()
         wakeLockManager.releaseWakeLock()
 
-        // 🌟 FIX: Retrieve PreferenceManager using Service Locator Pattern 🌟
-        // Note: Since TimerService implements KoinComponent, we can use the get() function.
         val preferenceManager: PreferenceManager = get()
 
-        // Check if the user has the sound preference enabled
-        val isSoundEnabled = preferenceManager.getPomodoroSoundState().value
+        // 🌟 MASTER CHECK: Retrieve master state 🌟
+        val isMasterEnabled = preferenceManager.getMasterNotificationState().value
 
-        if (isSoundEnabled) {
-            // 🌟 FIX: Conditionally play the sound 🌟
-            soundPlayer.playCycleEndSound()
+        // Check if the user has the sound preference enabled AND the master is enabled
+        if (isMasterEnabled) {
+            soundPlayer.playCycleEndSound() // Sound logic assumes only the master switch controls it now
+        }
+
+        if (isMasterEnabled) {
+            updateForegroundNotification() // Banner logic
         }
 
 
