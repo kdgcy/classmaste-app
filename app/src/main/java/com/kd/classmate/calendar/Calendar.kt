@@ -249,7 +249,7 @@ fun Calendar(navController: NavController){
                 if (uiState.isLoading) {
                     item { Text("Loading schedule...") }
                 } else if (uiState.scheduledTasks.isEmpty()) {
-                    item { Text("No tasks scheduled for this date.") }
+                    item { Text("No appointments scheduled for this date.") }
                 } else {
                     items(uiState.scheduledTasks) { appointment ->
                         Card(

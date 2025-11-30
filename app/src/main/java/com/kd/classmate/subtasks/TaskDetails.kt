@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -61,7 +62,22 @@ import com.kd.classmate.components.EditTaskDialog
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import com.kd.classmate.components.DateTimePickerDialogs
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.HorizontalDivider
 
+// --- HELPER FUNCTIONS FOR FORMATTING ---
+private val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
+private val timeFormatter = DateTimeFormatter.ofPattern("h:mma")
+
+@Composable
+private fun formatSchedule(date: LocalDate?, time: LocalTime?): Pair<String, String> {
+    val dateText = if (date != null) date.format(dateFormatter) else "Not set"
+    val timeText = if (time != null) time.format(timeFormatter) else "Not set"
+    return Pair(dateText, timeText)
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -74,7 +90,14 @@ fun TaskDetails(
     )
     val uiState = viewModel.uiState.collectAsState().value
 
-    // 🌟 NEW: Date/Time Picker Hosting 🌟
+    var revealedSubtaskId by remember { mutableStateOf<Int?>(null) }
+    var currentSwipedItemId by remember { mutableStateOf<Int?>(null) }
+    val currentRevealedId by rememberUpdatedState(currentSwipedItemId)
+
+    val (dateText, timeText) = formatSchedule(uiState.selectedDate, uiState.selectedTime)
+
+
+    // NEW: Date/Time Picker Hosting
     DateTimePickerDialogs(
         isDatePickerVisible = uiState.isDatePickerVisible,
         isTimePickerVisible = uiState.isTimePickerVisible,
@@ -84,10 +107,6 @@ fun TaskDetails(
         onTimeSelected = viewModel::updateSelectedTime,
         initialDate = uiState.selectedDate
     )
-
-    var revealedSubtaskId by remember { mutableStateOf<Int?>(null) }
-    var currentSwipedItemId by remember { mutableStateOf<Int?>(null) }
-    val currentRevealedId by rememberUpdatedState(currentSwipedItemId)
 
     // --- DIALOGS HOSTING ---
     if (uiState.isEditDialogVisible && uiState.task != null) {
@@ -151,7 +170,6 @@ fun TaskDetails(
                         task = uiState.task,
                         onStartEdit = viewModel::startEdit,
                         onDelete = viewModel::showDeleteConfirmation,
-                        // 🌟 NEW HANDLER PASSED TO MENU 🌟
                         onSetReminder = viewModel::setDatePickerVisibility
                     )
                 }
@@ -169,6 +187,15 @@ fun TaskDetails(
             }
         }
     ) { paddingValues ->
+        // Background Click Handler
+        if (currentRevealedId != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(onClick = { currentSwipedItemId = null })
+            )
+        }
+
         LazyColumn(modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
@@ -183,6 +210,33 @@ fun TaskDetails(
             },
             contentPadding = PaddingValues(bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
+
+            // NEW SECTION: SCHEDULE STATUS DISPLAY
+            item {
+                Column(horizontalAlignment = Alignment.Start) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "Due: $dateText", // Now resolved
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "Time: $timeText", // Now resolved
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Subtask Header (Separation line)
+            item {
+                HorizontalDivider()
+            }
+
             // Subtask List with SWIPE-TO-DELETE
             items(uiState.subtaskList, key = { it.id }) { subtask ->
                 // The visibility toggle is still needed for the smooth exit animation
