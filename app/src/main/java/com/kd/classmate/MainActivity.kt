@@ -9,17 +9,17 @@ import android.Manifest
 import androidx.core.app.ActivityCompat
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
-import com.kd.classmate.appsetting.AppSettingsViewModel // NEW IMPORT
-import com.kd.classmate.ui.theme.ClassMateTheme // Assume theme file is here
-import org.koin.android.ext.android.inject // NEW IMPORT
-import androidx.compose.foundation.isSystemInDarkTheme // NEW IMPORT
+import androidx.compose.runtime.CompositionLocalProvider // EXISTING IMPORT
+import com.kd.classmate.appsetting.AppSettingsViewModel
+import com.kd.classmate.ui.theme.ClassMateTheme
+import org.koin.android.ext.android.inject
+import androidx.compose.ui.platform.LocalDensity // 🌟 NEW IMPORT 🌟
+import androidx.compose.ui.unit.Density // 🌟 NEW IMPORT 🌟
+
 
 class MainActivity : ComponentActivity() {
 
-    // 🌟 NEW: Inject the ViewModel lazily to access the theme state 🌟
+    // Inject the ViewModel lazily to access the theme state
     private val appSettingsViewModel: AppSettingsViewModel by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,15 +28,27 @@ class MainActivity : ComponentActivity() {
         requestNotificationPermission()
 
         setContent {
-            // Collect the Dark Mode preference state from the ViewModel
+            // Collect the theme preference state from the ViewModel
             val settingsState by appSettingsViewModel.uiState.collectAsState()
 
             // Determine whether to use Dark Theme
             val useDarkTheme = settingsState.isDarkModeEnabled
 
-            // 🌟 FIX: Apply the theme based on the preference state 🌟
-            ClassMateTheme(darkTheme = useDarkTheme) {
-                AppNavigation()
+            // 🌟 FIX 1: Get the selected scale factor 🌟
+            val customScaleFactor = settingsState.selectedFontSize.scaleFactor
+
+            // 🌟 FIX 2: Override LocalDensity to apply global text scaling 🌟
+            CompositionLocalProvider(
+                LocalDensity provides Density(
+                    // FIX 1: Pass density as the first positional argument
+                    density = LocalDensity.current.density,
+                    // FIX 2: Pass fontScale as the second named argument
+                    fontScale = customScaleFactor
+                )
+            ) {
+                ClassMateTheme(darkTheme = useDarkTheme) {
+                    AppNavigation()
+                }
             }
         }
     }

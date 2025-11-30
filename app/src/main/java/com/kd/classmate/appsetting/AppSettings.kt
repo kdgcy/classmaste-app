@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.koin.androidx.compose.koinViewModel // NEW IMPORT
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.TextFields
+import com.kd.classmate.components.FontSizeDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,6 +31,15 @@ fun AppSettings(navController: NavController) {
     // 🌟 NEW: Initialize ViewModel and collect state 🌟
     val viewModel: AppSettingsViewModel = koinViewModel()
     val uiState = viewModel.uiState.collectAsState().value
+
+    // 🌟 NEW: Font Size Dialog Host 🌟
+    if (uiState.isFontSizeDialogVisible) {
+        FontSizeDialog(
+            currentSize = uiState.selectedFontSize,
+            onSizeSelected = viewModel::setFontSize,
+            onDismiss = { viewModel.setFontSizeDialogVisibility(false) }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -50,12 +61,19 @@ fun AppSettings(navController: NavController) {
         ) {
             item {
                 SettingsGroup("General") {
-                    // 🌟 NEW: Dark Mode Switch 🌟
+                    // Font Size Item
+                    SettingsItem(
+                        title = "Font Size",
+                        icon = Icons.Default.TextFields, // Use TextFields icon
+                        onClick = { viewModel.setFontSizeDialogVisibility(true) } // Show dialog
+                    )
+
+                    // Dark Mode Toggle
                     SettingsSwitch(
                         title = "Dark Mode",
                         icon = Icons.Default.Palette,
                         checked = uiState.isDarkModeEnabled,
-                        onCheckedChange = { viewModel.toggleDarkMode(it) } // Call the new toggle function
+                        onCheckedChange = { viewModel.toggleDarkMode(it) }
                     )
                 }
             }
