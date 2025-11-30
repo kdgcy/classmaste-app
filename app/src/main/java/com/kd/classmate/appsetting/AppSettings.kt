@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.koin.androidx.compose.koinViewModel // NEW IMPORT
+import androidx.compose.material.icons.filled.Palette
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +48,17 @@ fun AppSettings(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(24.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 16.dp, bottom = 16.dp)
         ) {
+            item {
+                SettingsGroup("General") {
+                    // 🌟 NEW: Dark Mode Switch 🌟
+                    SettingsSwitch(
+                        title = "Dark Mode",
+                        icon = Icons.Default.Palette,
+                        checked = uiState.isDarkModeEnabled,
+                        onCheckedChange = { viewModel.toggleDarkMode(it) } // Call the new toggle function
+                    )
+                }
+            }
             // --- 1. Master Notification Control ---
             item {
                 SettingsGroup("Notifications & Reminders") {

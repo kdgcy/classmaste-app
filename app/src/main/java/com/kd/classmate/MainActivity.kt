@@ -1,4 +1,3 @@
-// File: MainActivity.kt (UPDATED)
 package com.kd.classmate
 
 import android.os.Build
@@ -6,21 +5,39 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.content.ContextCompat
-import android.Manifest // NEW IMPORT
+import android.Manifest
 import androidx.core.app.ActivityCompat
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import com.kd.classmate.appsetting.AppSettingsViewModel // NEW IMPORT
+import com.kd.classmate.ui.theme.ClassMateTheme // Assume theme file is here
+import org.koin.android.ext.android.inject // NEW IMPORT
+import androidx.compose.foundation.isSystemInDarkTheme // NEW IMPORT
 
 class MainActivity : ComponentActivity() {
 
-    // ... (Existing variables remain the same) ...
+    // 🌟 NEW: Inject the ViewModel lazily to access the theme state 🌟
+    private val appSettingsViewModel: AppSettingsViewModel by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 🌟 NEW: Request POST_NOTIFICATIONS permission at runtime 🌟
         requestNotificationPermission()
 
         setContent {
-            AppNavigation()
+            // Collect the Dark Mode preference state from the ViewModel
+            val settingsState by appSettingsViewModel.uiState.collectAsState()
+
+            // Determine whether to use Dark Theme
+            val useDarkTheme = settingsState.isDarkModeEnabled
+
+            // 🌟 FIX: Apply the theme based on the preference state 🌟
+            ClassMateTheme(darkTheme = useDarkTheme) {
+                AppNavigation()
+            }
         }
     }
 
@@ -41,6 +58,5 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
-        // For older versions, the permission is automatically granted by the manifest.
     }
 }
