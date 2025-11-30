@@ -22,17 +22,19 @@ import androidx.navigation.NavController
 import org.koin.androidx.compose.koinViewModel // NEW IMPORT
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.TextFields
+import com.kd.classmate.AboutApp
 import com.kd.classmate.components.FontSizeDialog
+import com.kd.classmate.utils.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppSettings(navController: NavController) {
 
-    // 🌟 NEW: Initialize ViewModel and collect state 🌟
+    // Initialize ViewModel and collect state
     val viewModel: AppSettingsViewModel = koinViewModel()
     val uiState = viewModel.uiState.collectAsState().value
 
-    // 🌟 NEW: Font Size Dialog Host 🌟
+    // Font Size Dialog Host
     if (uiState.isFontSizeDialogVisible) {
         FontSizeDialog(
             currentSize = uiState.selectedFontSize,
@@ -80,7 +82,7 @@ fun AppSettings(navController: NavController) {
             // --- 1. Master Notification Control ---
             item {
                 SettingsGroup("Notifications & Reminders") {
-                    // 🌟 NEW: Master Switch 🌟
+                    //  Master Switch
                     SettingsSwitch(
                         title = "Master Notifications Switch",
                         icon = Icons.Default.NotificationsActive,
@@ -96,7 +98,7 @@ fun AppSettings(navController: NavController) {
                     SettingsItem(
                         title = "ClassMate",
                         icon = Icons.Default.Info,
-                        onClick = {  }
+                        onClick = { navController.navigate(Routes.about) }
                     )
                 }
             }

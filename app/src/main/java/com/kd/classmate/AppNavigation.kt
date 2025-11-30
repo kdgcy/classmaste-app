@@ -52,6 +52,12 @@ fun AppNavigation(){
             exitTransition = {fadeOut(tween(100)) }
         ) { AppSettings(navController) }
 
+        composable(
+            Routes.about,
+            enterTransition = {fadeIn(tween(100)) },
+            exitTransition = {fadeOut(tween(100)) }
+        ){ AboutApp(navController) }
+
         // TaskDetails
         composable(
             route = Routes.taskDetails,
