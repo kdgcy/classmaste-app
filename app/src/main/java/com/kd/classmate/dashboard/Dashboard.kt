@@ -7,14 +7,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -39,23 +45,17 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
+// --- HELPER FUNCTIONS FOR FORMATTING ---
+private val shortDateFormatter = DateTimeFormatter.ofPattern("MMM d")
 
 private fun formatDueDate(date: LocalDate?): String {
-    return if (date != null) {
-        // Use a standard formatter like "MMM d, yyyy" (e.g., Jul 27, 2025)
-        date.format(DateTimeFormatter.ofPattern("MMM d, yyyy"))
-    } else {
-        "Not set"
-    }
+    return date?.format(shortDateFormatter) ?: "Not set"
 }
 private fun formatDueTime(time: LocalTime?): String {
-    return if (time != null) {
-        // Use a standard 12-hour formatter like "h:mma" (e.g., 5:00AM)
-        time.format(DateTimeFormatter.ofPattern("h:mma"))
-    } else {
-        "Not set"
-    }
+    return time?.format(DateTimeFormatter.ofPattern("h:mma")) ?: "Not set"
 }
+// -------------------------------------------
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun Dashboard(navController: NavController) {
@@ -64,7 +64,7 @@ fun Dashboard(navController: NavController) {
     val viewModel: DashboardViewModel = koinViewModel()
     val uiState = viewModel.uiState.collectAsState().value
 
-    // --- 1. Add Task Dialog ---
+    // --- 1. Add Task Dialog Host (omitted for brevity) ---
     if (uiState.isAddDialogVisible) {
         AddTaskDialog(
             taskTitle = uiState.newTaskTitleInput,
@@ -114,63 +114,100 @@ fun Dashboard(navController: NavController) {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(uiState.taskList, key = { it.id }) { task ->
-                Box {
-                    Card(
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .combinedClickable(
-                                onClick = {
-                                    navController.navigate(Routes.taskDetailsPath(task.id))
-                                },
-                                onLongClick = {
-                                    viewModel.setTaskInContext(task)
-                                }
-                            )
+            if (uiState.taskList.isEmpty()) {
+                item {
+                    Column(
+                        // Fill the remaining space to center the content
+                        modifier = Modifier.fillParentMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Row(
+                        Icon(
+                            imageVector = Icons.Filled.ListAlt,
+                            contentDescription = null,
+                            modifier = Modifier.size(72.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "No tasks yet!",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = "Tap '+' to add your first to-do.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                    }
+                }
+            } else {
+                items(uiState.taskList, key = { it.id }) { task ->
+                    Box {
+                        Card(
+                            shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // 🌟 NEW: Column to stack Title and Due Date/Time 🌟
-                            Column(modifier = Modifier.weight(1f)) {
-                                // 1. Task Title
-                                Text(
-                                    text = task.title,
-                                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                                    style = MaterialTheme.typography.bodyLarge
+                                .combinedClickable(
+                                    onClick = {
+                                        navController.navigate(Routes.taskDetailsPath(task.id))
+                                    },
+                                    onLongClick = {
+                                        viewModel.setTaskInContext(task)
+                                    }
                                 )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Column to stack Title and Due Date/Time (Left Side)
+                                Column(modifier = Modifier.weight(1f)) {
+                                    // 1. Task Title (Larger and Bold)
+                                    Text(
+                                        text = task.title,
+                                        textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
 
-                                // 2. Due Date/Time Info (Only display if not completed)
-                                if (!task.isCompleted) {
-                                    Text(
-                                        text = "Due: ${formatDueDate(task.dueDate)}",
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            color = LocalContentColor.current.copy(alpha = 0.6f)
-                                        )
-                                    )
-                                    Text(
-                                        text = "Time: ${formatDueTime(task.dueTime)}",
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            color = LocalContentColor.current.copy(alpha = 0.6f)
-                                        )
-                                    )
+                                    // 2. Due Date/Time Info (Only display if not completed)
+                                    if (!task.isCompleted) {
+                                        Row(
+                                            modifier = Modifier.padding(top = 4.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            // Display Date and Time compacted
+                                            Text(
+                                                text = formatDueDate(task.dueDate),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(
+                                                text = " | ",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(
+                                                text = formatDueTime(task.dueTime),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
-                    // Only show the menu if this specific task matches the one in context
-                    if (uiState.taskInContext == task) {
-                        TaskContextMenu(
-                            task = task,
-                            onDismiss = { viewModel.setTaskInContext(null) },
-                            // 💥 FIX: The function is only passed to the Context Menu as a reference.
-                            // The Context Menu (TaskContextMenu.kt) must be fixed to pass only one parameter.
-                            onToggleCompletion = viewModel::updateTaskCompletion // Ensure this is the correct reference
-                        )
+                        // Context Menu Host
+                        if (uiState.taskInContext == task) {
+                            TaskContextMenu(
+                                task = task,
+                                onDismiss = { viewModel.setTaskInContext(null) },
+                                onToggleCompletion = viewModel::updateTaskCompletion
+                            )
+                        }
                     }
                 }
             }
