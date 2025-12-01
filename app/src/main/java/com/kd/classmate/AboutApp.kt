@@ -1,8 +1,6 @@
 package com.kd.classmate
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,15 +11,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MailOutline
-import androidx.compose.material.icons.filled.NightsStay
-import androidx.compose.material.icons.filled.Star // App Icon Placeholder
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Task
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
@@ -35,23 +32,21 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.kd.classmate.appsetting.SettingsGroup // Reused component
-import com.kd.classmate.appsetting.SettingsItem // Reused component
-import com.kd.classmate.utils.Routes // Used for navigation
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.vector.ImageVector
+import com.kd.classmate.appsetting.SettingsGroup
+import com.kd.classmate.appsetting.SettingsItem
 
-
-// Define App Metadata (Typically read from build config, but hardcoded here for UI demo)
-private const val APP_VERSION = "1.0"
-private const val CONTACT_EMAIL = "developer@classmate.com" // Placeholder email
+// App Metadata
+private const val APP_VERSION = "1.0.0"
+private const val DEVELOPER_NAME = "KD"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +54,7 @@ fun AboutApp(navController: NavController) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("About") }, // Title simplified to 'About'
+                title = { Text("About ClassMate") },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(imageVector = Icons.Filled.ArrowBackIosNew, contentDescription = null)
@@ -73,34 +68,32 @@ fun AboutApp(navController: NavController) {
                 .fillMaxSize()
                 .padding(paddingValues),
             horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // --- 1. App Header/Logo ---
+            // --- 1. Header & Logo ---
             item {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Placeholder Logo Icon
                     Icon(
-                        imageVector = Icons.Filled.Star, // Placeholder for app's primary icon
+                        imageVector = Icons.Filled.School, // Capstone Logo
                         contentDescription = "ClassMate Logo",
-                        modifier = Modifier.size(64.dp),
+                        modifier = Modifier.size(72.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "ClassMate",
-                        style = MaterialTheme.typography.headlineMedium
+                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = "Version $APP_VERSION",
+                        text = "Student Productivity System v$APP_VERSION",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // --- 2. About this App Card (Design Focus) ---
+            // --- 2. General Objective (Abstract) ---
             item {
                 Card(
                     modifier = Modifier
@@ -109,87 +102,66 @@ fun AboutApp(navController: NavController) {
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                     ),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(4.dp)
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "About this App",
+                            text = "Project Objective",
                             style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(bottom = 8.dp)
+                            modifier = Modifier.padding(bottom = 8.dp),
+                            color = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "ClassMate is your all-in-one academic sidekick. It combines a powerful Task Dashboard, a Smart Calendar for appointments, and a Pomodoro Timer to help you stay focused.",
+                            text = "To develop a student-focused productivity app that helps users manage tasks, deadlines, schedules, and overall progress. ClassMate provides a user-friendly, all-in-one solution designed to enhance student productivity and academic success.",
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Justify
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        // Contact Developer Button
-                        Button(
-                            onClick = { /* TODO: Implement Intent to open email app */ },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.secondary
-                            )
-                        ) {
-                            Icon(Icons.Filled.MailOutline, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-                            Text("Contact Developer")
-                        }
                     }
                 }
             }
 
-            // --- 3. Key Features Group ---
+            // --- 3. Core Subsystems (Scope) ---
             item {
-                SettingsGroup(title = "Key Features") {
+                SettingsGroup(title = "Core Subsystems") {
                     Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                        // Task Management Feature
                         FeatureItem(
-                            title = "Tasks with Subtasks & Progress",
+                            title = "Task Management System",
+                            description = "Input, organize, and track assignments & deadlines.",
                             icon = Icons.Filled.Task
                         )
-                        // Calendar Feature
                         FeatureItem(
-                            title = "Smart Calendar for Appointments",
+                            title = "Calendar & Scheduling",
+                            description = "Manage class schedules, exams, and events.",
                             icon = Icons.Filled.CalendarMonth
                         )
-                        // Pomodoro Feature
                         FeatureItem(
-                            title = "Focus Timer with Persistence",
+                            title = "Notification System",
+                            description = "Automated reminders and upcoming alerts.",
+                            icon = Icons.Filled.NotificationsActive
+                        )
+                        FeatureItem(
+                            title = "Pomodoro Timer",
+                            description = "Focus session management with cycle tracking.",
                             icon = Icons.Filled.Timer
                         )
-                        // Dynamic Theme
-                        FeatureItem(
-                            title = "Dynamic Dark Mode Support",
-                            icon = Icons.Filled.NightsStay
-                        )
                     }
                 }
             }
 
-            // --- 4. Pomodoro Logic Group ---
+            // --- 5. Developer Info ---
             item {
-                SettingsGroup(title = "Pomodoro Logic") {
-                    Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                        Text(
-                            text = "• 25 min Work / 5 min Short Break (Customizable)",
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                        )
-                        Text(
-                            text = "• After 4 Cycles: 15 min Long Break",
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
+                SettingsGroup(title = "Development Team") {
+                    SettingsItem(
+                        title = "Fren, Alliah, & Kenneth",
+                        icon = Icons.Default.Info,
+                        onClick = { /* Contact action */ }
+                    )
                 }
-            }
 
-            // --- 5. Legal Group (Simplified Footer) ---
-            item {
                 Text(
-                    text = "© 2025 ClassMate. All rights reserved.",
+                    text = "© 2025 ClassMate.",
                     style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(top = 24.dp),
                     color = MaterialTheme.colorScheme.outline
                 )
             }
@@ -197,25 +169,32 @@ fun AboutApp(navController: NavController) {
     }
 }
 
-// 🌟 NEW: Helper Composable for Feature List (to simplify the UI) 🌟
+// Helper Composable for Detailed Feature List
 @Composable
-private fun FeatureItem(title: String, icon: ImageVector) {
+private fun FeatureItem(title: String, description: String, icon: ImageVector) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(24.dp)
         )
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge
-        )
+        Column(modifier = Modifier.padding(start = 16.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
