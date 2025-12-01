@@ -66,7 +66,10 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.filled.FormatListBulleted
 
 // --- HELPER FUNCTIONS FOR FORMATTING ---
 private val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
@@ -84,7 +87,7 @@ private fun formatSchedule(date: LocalDate?, time: LocalTime?): Pair<String, Str
 fun TaskDetails(
     navController: NavController,
     taskId: Int
-){
+) {
     val viewModel: TaskDetailsViewModel = koinViewModel(
         parameters = { parametersOf(taskId) }
     )
@@ -160,7 +163,7 @@ fun TaskDetails(
                     )
                 },
                 navigationIcon = {
-                    IconButton( onClick = { navController.navigateUp() }) {
+                    IconButton(onClick = { navController.navigateUp() }) {
                         Icon(imageVector = Icons.Filled.ArrowBackIosNew, contentDescription = null)
                     }
                 },
@@ -196,20 +199,22 @@ fun TaskDetails(
             )
         }
 
-        LazyColumn(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .padding(horizontal = 16.dp)
-            // DETECT TAPS ON BACKGROUND/EMPTY SPACE TO CLOSE DELETE ICON
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        revealedSubtaskId = null
-                    }
-                )
-            },
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp)
+                // DETECT TAPS ON BACKGROUND/EMPTY SPACE TO CLOSE DELETE ICON
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            revealedSubtaskId = null
+                        }
+                    )
+                },
             contentPadding = PaddingValues(bottom = 100.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
 
             // NEW SECTION: SCHEDULE STATUS DISPLAY
             item {
@@ -236,115 +241,147 @@ fun TaskDetails(
             item {
                 HorizontalDivider()
             }
-
-            // Subtask List with SWIPE-TO-DELETE
-            items(uiState.subtaskList, key = { it.id }) { subtask ->
-                // The visibility toggle is still needed for the smooth exit animation
-                var isVisible by remember { mutableStateOf(true) }
-
-                val dismissState = rememberSwipeToDismissBoxState(
-                    confirmValueChange = { newValue ->
-                        if (newValue == SwipeToDismissBoxValue.EndToStart) {
-                            // If user swipes this row, mark it as the revealed one
-                            revealedSubtaskId = subtask.id
-                            true
-                        } else {
-                            // If they swipe back to close, clear the id
-                            if (revealedSubtaskId == subtask.id) {
-                                revealedSubtaskId = null
-                            }
-                            true
-                        }
-                    }
-                )
-
-                // THE MAGIC: CLOSE THIS ROW IF ANOTHER IS OPENED OR BACKGROUND TAPPED
-                LaunchedEffect(revealedSubtaskId) {
-                    if (revealedSubtaskId != subtask.id && dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
-                        dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+            if (uiState.subtaskList.isEmpty()) {
+                item {
+                    Column(
+                        // 🌟 CRITICAL FIX: Use fillParentMaxSize() to make the Column fill the LazyColumn's available height 🌟
+                        modifier = Modifier.fillParentMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center // Centers content vertically within the large Column
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.FormatListBulleted, // Use List icon
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "No subtasks yet!",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = "Tap the '+' button below to add one.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
                     }
                 }
-                AnimatedVisibility(
-                    visible = isVisible,
-                    exit = shrinkVertically(tween(300)) + fadeOut(tween(300))
-                ){
-                    SwipeToDismissBox(
-                        state = dismissState,
-                        enableDismissFromStartToEnd = false,
-                        backgroundContent = {
-                            val progress = dismissState.progress
-                            val scale = Math.min(1f, progress)
+            } else {
+                // Subtask List with SWIPE-TO-DELETE
+                items(uiState.subtaskList, key = { it.id }) { subtask ->
+                    // The visibility toggle is still needed for the smooth exit animation
+                    var isVisible by remember { mutableStateOf(true) }
 
-                            Box(
-                                Modifier
-                                    .fillMaxSize()
-                                    .background(Color.Transparent)
-                                    .padding(horizontal = 20.dp),
-                                contentAlignment = Alignment.CenterEnd
-                            ) {
-                                IconButton(
-                                    onClick = {
-                                        isVisible = false
-                                        viewModel.deleteSubtask(subtask)
-                                        // Reset revealed ID after deletion
-                                        if (revealedSubtaskId == subtask.id) revealedSubtaskId = null
-                                    },
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .scale(scale)
-                                        .background(
-                                            color = MaterialTheme.colorScheme.error,
-                                            shape = CircleShape
-                                        )
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Delete,
-                                        contentDescription = "Delete",
-                                        tint = MaterialTheme.colorScheme.onError,
-                                    )
+                    val dismissState = rememberSwipeToDismissBoxState(
+                        confirmValueChange = { newValue ->
+                            if (newValue == SwipeToDismissBoxValue.EndToStart) {
+                                // If user swipes this row, mark it as the revealed one
+                                revealedSubtaskId = subtask.id
+                                true
+                            } else {
+                                // If they swipe back to close, clear the id
+                                if (revealedSubtaskId == subtask.id) {
+                                    revealedSubtaskId = null
                                 }
-                            }
-                        },
-                        content = {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            // IF USER TAPS THE ROW CONTENT, ALSO CLOSE THE DELETE ICON
-                                            if (revealedSubtaskId != null) {
-                                                revealedSubtaskId = null
-                                            } else {
-                                                viewModel.updateSubtaskCompletion(subtask, !subtask.isCompleted)
-                                            }
-                                        },
-                                        onLongClick = {
-                                            // Close delete icon before opening edit dialog
-                                            revealedSubtaskId = null
-                                            viewModel.startEditSubtask(subtask)
-                                        }
-                                    )
-                                    .background(MaterialTheme.colorScheme.surface)
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = subtask.isCompleted,
-                                    onCheckedChange = { isChecked ->
-                                        // Close delete icon if checking the box
-                                        revealedSubtaskId = null
-                                        viewModel.updateSubtaskCompletion(subtask, isChecked)
-                                    }
-                                )
-                                Text(
-                                    text = subtask.title,
-                                    modifier = Modifier.padding(start = 8.dp),
-                                    textDecoration = if (subtask.isCompleted) TextDecoration.LineThrough else null,
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
+                                true
                             }
                         }
                     )
+
+                    // THE MAGIC: CLOSE THIS ROW IF ANOTHER IS OPENED OR BACKGROUND TAPPED
+                    LaunchedEffect(revealedSubtaskId) {
+                        if (revealedSubtaskId != subtask.id && dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+                            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+                        }
+                    }
+                    AnimatedVisibility(
+                        visible = isVisible,
+                        exit = shrinkVertically(tween(300)) + fadeOut(tween(300))
+                    ) {
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            enableDismissFromStartToEnd = false,
+                            backgroundContent = {
+                                val progress = dismissState.progress
+                                val scale = Math.min(1f, progress)
+
+                                Box(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Transparent)
+                                        .padding(horizontal = 20.dp),
+                                    contentAlignment = Alignment.CenterEnd
+                                ) {
+                                    IconButton(
+                                        onClick = {
+                                            isVisible = false
+                                            viewModel.deleteSubtask(subtask)
+                                            // Reset revealed ID after deletion
+                                            if (revealedSubtaskId == subtask.id) revealedSubtaskId =
+                                                null
+                                        },
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .scale(scale)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.error,
+                                                shape = CircleShape
+                                            )
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.Delete,
+                                            contentDescription = "Delete",
+                                            tint = MaterialTheme.colorScheme.onError,
+                                        )
+                                    }
+                                }
+                            },
+                            content = {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .combinedClickable(
+                                            onClick = {
+                                                // IF USER TAPS THE ROW CONTENT, ALSO CLOSE THE DELETE ICON
+                                                if (revealedSubtaskId != null) {
+                                                    revealedSubtaskId = null
+                                                } else {
+                                                    viewModel.updateSubtaskCompletion(
+                                                        subtask,
+                                                        !subtask.isCompleted
+                                                    )
+                                                }
+                                            },
+                                            onLongClick = {
+                                                // Close delete icon before opening edit dialog
+                                                revealedSubtaskId = null
+                                                viewModel.startEditSubtask(subtask)
+                                            }
+                                        )
+                                        .background(MaterialTheme.colorScheme.surface)
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = subtask.isCompleted,
+                                        onCheckedChange = { isChecked ->
+                                            // Close delete icon if checking the box
+                                            revealedSubtaskId = null
+                                            viewModel.updateSubtaskCompletion(subtask, isChecked)
+                                        }
+                                    )
+                                    Text(
+                                        text = subtask.title,
+                                        modifier = Modifier.padding(start = 8.dp),
+                                        textDecoration = if (subtask.isCompleted) TextDecoration.LineThrough else null,
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
