@@ -106,7 +106,7 @@ class DashboardViewModel(
     }
 
     fun updateSelectedTime(time: LocalTime) {
-        _selectedTime.value = time
+        _selectedTime.value = time.withSecond(0).withNano(0)
     }
 
     // --- State Update Functions ---
