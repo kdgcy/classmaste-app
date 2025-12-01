@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -78,7 +79,9 @@ fun Pomodoro(navController: NavController) {
         animationSpec = tween(durationMillis = 500)
     )
 
-    // --- 🌟 NEW: Settings Dialog Hosting 🌟 ---
+    val isTimerActive = uiState.timerState != TimerState.IDLE
+
+    // --- Settings Dialog Hosting ---
     if (uiState.isSettingsDialogVisible) {
         PomodoroSettingsDialog(
             currentSettings = uiState.settings,
@@ -104,96 +107,111 @@ fun Pomodoro(navController: NavController) {
             )
         }
     ) { paddingValues ->
+        // Main Column uses SpaceBetween to keep controls at the bottom
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.SpaceBetween // Keeps controls at the bottom
         ) {
             // Placeholder for top alignment
             Box(modifier = Modifier.height(20.dp))
 
-            // --- 1. Cycle Progress Text ---
-            Text(
-                text = "CYCLE ${uiState.workCyclesCompleted + 1} / 4",
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            // --- 2. Main Timer Display (Circular Ring) ---
+            // 🌟 Main Centering Container: This Box takes all remaining vertical space (weight 1f) and centers its content 🌟
             Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(300.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                // Background Ring (Static)
-                CircularProgressIndicator(
-                    progress = 1f,
-                    modifier = Modifier.size(280.dp),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                    strokeWidth = 10.dp
-                )
-
-                // Foreground Progress Ring (Dynamic)
-                CircularProgressIndicator(
-                    progress = progress,
-                    modifier = Modifier.size(280.dp),
-                    color = ringColor,
-                    strokeWidth = 10.dp,
-                    strokeCap = StrokeCap.Round
-                )
-
-                // Time and Status Text
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // --- 1. Cycle Progress Text (Always Visible) ---
                     Text(
-                        text = formattedTime,
-                        style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Light),
-                        color = MaterialTheme.colorScheme.onSurface
+                        text = "CYCLE ${uiState.workCyclesCompleted + 1} / 4",
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = currentCycleText,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = ringColor
-                    )
+
+                    // --- 2. Main Timer Display (Circular Ring - Always Visible) ---
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(300.dp)
+                    ) {
+                        // Background Ring (Static)
+                        CircularProgressIndicator(
+                            progress = 1f,
+                            modifier = Modifier.size(280.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                            strokeWidth = 10.dp
+                        )
+
+                        // Foreground Progress Ring (Dynamic)
+                        CircularProgressIndicator(
+                            progress = progress,
+                            modifier = Modifier.size(280.dp),
+                            color = ringColor,
+                            strokeWidth = 15.dp,
+                            strokeCap = StrokeCap.Round
+                        )
+
+                        // Time and Status Text
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = formattedTime,
+                                // 🌟 IMPROVEMENT: Increased font weight for visual dominance 🌟
+                                style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = currentCycleText,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = ringColor
+                            )
+                        }
+                    }
                 }
             }
 
-            // --- 3. Controls ---
+            // --- 3. Controls (Refined Layout) ---
             Row(
                 modifier = Modifier.padding(horizontal = 32.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.SpaceAround
             ) {
-                // Reset Button (Left)
+                // Reset Button (Smaller and only enabled if timer isn't IDLE)
                 IconButton(
                     onClick = { viewModel.resetTimer(shouldStart = false) },
-                    modifier = Modifier.size(64.dp)
+                    modifier = Modifier.size(56.dp),
+                    enabled = isTimerActive // Still useful to disable button press during IDLE
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Refresh,
                         contentDescription = "Reset Timer",
                         modifier = Modifier.size(32.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (isTimerActive) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.outline
                     )
                 }
 
                 Spacer(modifier = Modifier.size(32.dp))
 
-                // Play/Pause Button (Center - Large Primary Action)
+                // Play/Pause Button (Large Primary Action)
                 Button(
                     onClick = viewModel::toggleTimer,
-                    modifier = Modifier.size(80.dp),
+                    modifier = Modifier.size(96.dp), // Larger button
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(containerColor = ringColor)
                 ) {
                     Icon(
                         imageVector = if (uiState.timerState == TimerState.RUNNING) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                         contentDescription = "Toggle Timer",
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(48.dp) // Larger icon
                     )
                 }
+
+                Spacer(modifier = Modifier.size(56.dp)) // Placeholder to balance the layout
             }
         }
     }
