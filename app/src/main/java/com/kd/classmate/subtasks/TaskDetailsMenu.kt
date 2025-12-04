@@ -27,7 +27,7 @@ fun TaskDetailsMenu(
     task: Task?,
     onStartEdit: () -> Unit,
     onDelete: () -> Unit,
-    onSetReminder: (Boolean) -> Unit // 🌟 NEW HANDLER 🌟
+    onSetReminder: (Boolean) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     if(task==null) return
@@ -58,7 +58,7 @@ fun TaskDetailsMenu(
                 }
             )
 
-            // 🌟 FIX: Set Reminder Action 🌟
+            // Set Reminder Action
             DropdownMenuItem(
                 text = { Text("Set reminder") },
                 leadingIcon = {

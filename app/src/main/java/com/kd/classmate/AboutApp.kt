@@ -16,13 +16,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Task
 import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -36,7 +34,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -71,11 +68,11 @@ fun AboutApp(navController: NavController) {
             contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // --- 1. Header & Logo ---
+            // --- Header & Logo ---
             item {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        imageVector = Icons.Filled.School, // Capstone Logo
+                        imageVector = Icons.Filled.School,
                         contentDescription = "ClassMate Logo",
                         modifier = Modifier.size(72.dp),
                         tint = MaterialTheme.colorScheme.primary
@@ -93,7 +90,7 @@ fun AboutApp(navController: NavController) {
                 }
             }
 
-            // --- 2. General Objective (Abstract) ---
+            // --- General Objective ---
             item {
                 Card(
                     modifier = Modifier
@@ -120,7 +117,7 @@ fun AboutApp(navController: NavController) {
                 }
             }
 
-            // --- 3. Core Subsystems (Scope) ---
+            // --- Core Subsystems ---
             item {
                 SettingsGroup(title = "Core Subsystems") {
                     Column(modifier = Modifier.padding(vertical = 8.dp)) {
@@ -148,14 +145,29 @@ fun AboutApp(navController: NavController) {
                 }
             }
 
-            // --- 5. Developer Info ---
+            // --- Developer Info ---
             item {
                 SettingsGroup(title = "Development Team") {
-                    SettingsItem(
-                        title = "Fren, Alliah, & Kenneth",
-                        icon = Icons.Default.Info,
-                        onClick = { /* Contact action */ }
-                    )
+                    Column(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) {
+                        Text(
+                            text = "Fren Reinan C. Eque",
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.padding(bottom = 4.dp, top = 4.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Alliah N. Barcellano",
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.padding(bottom = 4.dp, top = 4.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Kenneth Dagacay",
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.padding(bottom = 8.dp, top = 4.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
 
                 Text(

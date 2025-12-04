@@ -160,7 +160,6 @@ fun Pomodoro(navController: NavController) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = formattedTime,
-                                // 🌟 IMPROVEMENT: Increased font weight for visual dominance 🌟
                                 style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.SemiBold),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -175,7 +174,7 @@ fun Pomodoro(navController: NavController) {
                 }
             }
 
-            // --- 3. Controls (Refined Layout) ---
+            // --- Controls ---
             Row(
                 modifier = Modifier.padding(horizontal = 32.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -185,7 +184,7 @@ fun Pomodoro(navController: NavController) {
                 IconButton(
                     onClick = { viewModel.resetTimer(shouldStart = false) },
                     modifier = Modifier.size(56.dp),
-                    enabled = isTimerActive // Still useful to disable button press during IDLE
+                    enabled = isTimerActive
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Refresh,
@@ -197,7 +196,7 @@ fun Pomodoro(navController: NavController) {
 
                 Spacer(modifier = Modifier.size(32.dp))
 
-                // Play/Pause Button (Large Primary Action)
+                // Play/Pause Button
                 Button(
                     onClick = viewModel::toggleTimer,
                     modifier = Modifier.size(96.dp), // Larger button

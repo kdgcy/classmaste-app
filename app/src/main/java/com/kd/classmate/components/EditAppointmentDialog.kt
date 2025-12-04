@@ -30,7 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.kd.classmate.data.Task // NEW IMPORT
+import com.kd.classmate.data.Task
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -78,13 +78,12 @@ fun EditAppointmentDialog(
         }
     }
 
-    // --- New Appointment Dialog ---
+    // --- Appointment Dialog ---
     AlertDialog(
         onDismissRequest = onCancel,
         title = { Text("Edit Appointment") },
         text = {
             Column(horizontalAlignment = Alignment.Start) {
-                // Display Date (NOT EDITABLE)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(bottom = 16.dp)

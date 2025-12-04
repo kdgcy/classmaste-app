@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -41,14 +40,12 @@ data class PomodoroSettings(
     val shortBreakMinutes: Long = 5L,
     val longBreakMinutes: Long = 15L
 )
-
-// 🌟 FIX: Removed the duplicate declaration of PomodoroUiState (Line 44 & 54) 🌟
 data class PomodoroUiState(
     val timeRemainingSeconds: Long = TimeUnit.MINUTES.toSeconds(25L),
     val timerState: TimerState = TimerState.IDLE,
     val cycleState: CycleState = CycleState.WORK,
     val workCyclesCompleted: Int = 0,
-    // 🌟 NEW: Settings State 🌟
+    // Settings State
     val settings: PomodoroSettings = PomodoroSettings(),
     val isSettingsDialogVisible: Boolean = false
 )
@@ -62,14 +59,14 @@ class PomodoroViewModel(
     private val _settings = MutableStateFlow(PomodoroSettings())
     private val _isSettingsDialogVisible = MutableStateFlow(false)
 
-    // 1. Service Connection State
+    // Service Connection State
     private val _isBound = MutableStateFlow(false)
     private var timerService: TimerService? = null
 
-    // 2. Service Timer State Flow (default/initial flow)
+    // Service Timer State Flow (default/initial flow)
     private val serviceTimerStateFlow = MutableStateFlow(ServiceTimerState())
 
-    // 3. Service Connection Object
+    // Service Connection Object
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as TimerService.TimerServiceBinder
@@ -131,7 +128,7 @@ class PomodoroViewModel(
             initialValue = PomodoroUiState()
         )
 
-    // --- 🌟 NEW: Settings Management Functions 🌟 ---
+    // --- Settings Management Functions ---
 
     fun setSettingsDialogVisibility(isVisible: Boolean) {
         _isSettingsDialogVisible.value = isVisible
@@ -145,7 +142,7 @@ class PomodoroViewModel(
                 longBreakMinutes = longBreak
             )
         }
-        // 🌟 FIX: Call the service function to update settings 🌟
+        // Call the service function to update settings
         // The service function updateSettings must be defined in TimerService.kt
         timerService?.updateSettings(work, shortBreak, longBreak)
         setSettingsDialogVisibility(false)
@@ -161,10 +158,12 @@ class PomodoroViewModel(
         timerService?.resetTimer(shouldStart)
     }
 
+    /*
     fun resetCycleCount() {
         // Needs logic in TimerService.kt if required
         // timerService?.resetCycleCount()
     }
+    */
 
     override fun onCleared() {
         super.onCleared()

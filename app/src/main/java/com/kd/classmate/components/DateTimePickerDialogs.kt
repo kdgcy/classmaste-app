@@ -1,5 +1,3 @@
-// File: DateTimePickerDialogs.kt (NEW FILE)
-
 package com.kd.classmate.components
 
 import androidx.compose.material3.DatePicker
@@ -7,9 +5,8 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimeInput
-import androidx.compose.material3.TimePickerDialog
 import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDialog
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -30,7 +27,7 @@ fun DateTimePickerDialogs(
     initialDate: LocalDate? = null // Optional initial date for the picker
 ) {
 
-    // --- 1. Date Picker ---
+    // --- Date Picker ---
     if (isDatePickerVisible) {
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = initialDate?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
@@ -61,7 +58,7 @@ fun DateTimePickerDialogs(
         }
     }
 
-    // --- 2. Time Picker ---
+    // --- Time Picker ---
     if (isTimePickerVisible) {
         val timePickerState = rememberTimePickerState(
             initialHour = LocalTime.now().hour,

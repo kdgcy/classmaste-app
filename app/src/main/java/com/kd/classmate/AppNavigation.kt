@@ -3,8 +3,6 @@ package com.kd.classmate
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,7 +19,7 @@ import com.kd.classmate.utils.Routes
 @Composable
 fun AppNavigation(){
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = Routes.splash,) {
+    NavHost(navController = navController, startDestination = Routes.splash) {
 
         composable(
             Routes.splash,

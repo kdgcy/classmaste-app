@@ -8,7 +8,7 @@ import com.kd.classmate.utils.NotificationPublisher
 class NotificationReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        // 🌟 FIX: Verify the unique action of the Intent 🌟
+        // Verify the unique action of the Intent
         if (intent.action != NotificationSchedulerImpl.ACTION_REMINDER) {
             return
         }

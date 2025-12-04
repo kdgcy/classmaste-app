@@ -13,8 +13,8 @@ import androidx.compose.runtime.CompositionLocalProvider // EXISTING IMPORT
 import com.kd.classmate.appsetting.AppSettingsViewModel
 import com.kd.classmate.ui.theme.ClassMateTheme
 import org.koin.android.ext.android.inject
-import androidx.compose.ui.platform.LocalDensity // 🌟 NEW IMPORT 🌟
-import androidx.compose.ui.unit.Density // 🌟 NEW IMPORT 🌟
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 
 
 class MainActivity : ComponentActivity() {
@@ -34,15 +34,15 @@ class MainActivity : ComponentActivity() {
             // Determine whether to use Dark Theme
             val useDarkTheme = settingsState.isDarkModeEnabled
 
-            // 🌟 FIX 1: Get the selected scale factor 🌟
+            // Get the selected scale factor
             val customScaleFactor = settingsState.selectedFontSize.scaleFactor
 
-            // 🌟 FIX 2: Override LocalDensity to apply global text scaling 🌟
+            // Override LocalDensity to apply global text scaling
             CompositionLocalProvider(
                 LocalDensity provides Density(
-                    // FIX 1: Pass density as the first positional argument
+                    // Pass density as the first positional argument
                     density = LocalDensity.current.density,
-                    // FIX 2: Pass fontScale as the second named argument
+                    // Pass fontScale as the second named argument
                     fontScale = customScaleFactor
                 )
             ) {

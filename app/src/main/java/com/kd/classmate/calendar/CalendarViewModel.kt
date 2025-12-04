@@ -28,7 +28,7 @@ data class CalendarUiState(
     val newAppointmentTime: LocalTime = LocalTime.now().truncatedTo(ChronoUnit.MINUTES),
     val isTimePickerVisible: Boolean = false,
 
-    // 🌟 NEW: Edit Appointment State 🌟
+    //  Edit Appointment State
     val appointmentBeingEdited: Task? = null,
     val isEditAppointmentDialogVisible: Boolean = false,
     val editAppointmentTitleInput: String = "",
@@ -37,7 +37,7 @@ data class CalendarUiState(
 
 class CalendarViewModel(
     private val repository: TaskRepository,
-    private val notificationScheduler: NotificationScheduler // NEW: Inject Scheduler
+    private val notificationScheduler: NotificationScheduler // Inject Scheduler
 ) : ViewModel() {
 
     private val _allTasksFlow = repository.getAllTasks()
@@ -49,13 +49,13 @@ class CalendarViewModel(
     private val _newAppointmentTime = MutableStateFlow(LocalTime.now().truncatedTo(ChronoUnit.MINUTES))
     private val _isTimePickerVisible = MutableStateFlow(false)
 
-    // 🌟 NEW: Edit Appointment Flows 🌟
+    //  Edit Appointment Flows
     private val _appointmentBeingEdited = MutableStateFlow<Task?>(null)
     private val _isEditAppointmentDialogVisible = MutableStateFlow(false)
     private val _editAppointmentTitleInput = MutableStateFlow("")
     private val _editAppointmentTime = MutableStateFlow(LocalTime.now().truncatedTo(ChronoUnit.MINUTES))
 
-    // Combine flows to provide filtered data to the UI (FIXED AMBIGUITY USING ARRAY)
+    // Combine flows to provide filtered data to the UI
     @Suppress("UNCHECKED_CAST")
     val uiState: StateFlow<CalendarUiState> = combine(
         listOf(
@@ -85,7 +85,7 @@ class CalendarViewModel(
             newAppointmentTime = args[4] as LocalTime,
             isTimePickerVisible = args[5] as Boolean,
 
-            // NEW Edit State
+            // Edit State
             appointmentBeingEdited = args[6] as Task?,
             isEditAppointmentDialogVisible = args[7] as Boolean,
             editAppointmentTitleInput = args[8] as String,
@@ -101,7 +101,7 @@ class CalendarViewModel(
         _selectedDate.value = date
     }
 
-    // --- NEW: Appointment Functions ---
+    // --- Appointment Functions ---
 
     fun setAppointmentDialogVisibility(isVisible: Boolean) {
         _isAppointmentDialogVisible.value = isVisible
@@ -146,7 +146,7 @@ class CalendarViewModel(
         }
     }
 
-    // --- 🌟 NEW: Update/Delete Functions 🌟 ---
+    // --- Update/Delete Functions  ---
 
     fun startEditAppointment(appointment: Task) {
         _appointmentBeingEdited.value = appointment

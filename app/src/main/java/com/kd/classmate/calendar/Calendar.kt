@@ -1,6 +1,6 @@
 package com.kd.classmate.calendar
 
-import androidx.compose.foundation.clickable // New import
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,7 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.kd.classmate.components.NewAppointmentDialog
-import com.kd.classmate.components.EditAppointmentDialog // 🌟 NEW IMPORT 🌟
+import com.kd.classmate.components.EditAppointmentDialog
 import org.koin.androidx.compose.koinViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -67,7 +67,7 @@ fun Calendar(navController: NavController){
     val totalCells = daysInMonth + startDayOffset
     val numRows = (totalCells + 6) / 7
 
-    // --- EDIT Appointment Dialog Host  ---
+    // --- Appointment Dialog Host  ---
     uiState.appointmentBeingEdited?.let { appointment ->
         if (uiState.isEditAppointmentDialogVisible) {
             EditAppointmentDialog(
@@ -85,7 +85,7 @@ fun Calendar(navController: NavController){
         }
     }
 
-    // --- NEW Appointment Dialog Host ---
+    // --- Appointment Dialog Host ---
     if (uiState.isAppointmentDialogVisible) {
         NewAppointmentDialog(
             selectedDate = uiState.selectedDate,
@@ -136,7 +136,7 @@ fun Calendar(navController: NavController){
                 .padding(paddingValues)
         ) {
 
-            // --- 1. Monthly Navigation and Header ---
+            // --- Monthly Navigation and Header ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -156,7 +156,7 @@ fun Calendar(navController: NavController){
                 }
             }
 
-            // --- 2. Calendar Grid ---
+            // --- Calendar Grid ---
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -192,7 +192,7 @@ fun Calendar(navController: NavController){
                             ) {
                                 dayDate?.let { date ->
                                     val isSelected = date == uiState.selectedDate
-                                    // 🌟 FIX: Check if the date is in the past 🌟
+                                    // Check if the date is in the past
                                     val isPastDate = date.isBefore(today)
 
                                     val clickEnabled = !isPastDate
@@ -213,7 +213,7 @@ fun Calendar(navController: NavController){
                                     Surface(
                                         modifier = Modifier
                                             .size(36.dp)
-                                            // 🌟 FIX: Click only if NOT a past date 🌟
+                                            // Click only if NOT a past date
                                             .clickable(enabled = clickEnabled) { viewModel.setSelectedDate(date) },
                                         shape = CircleShape,
                                         color = surfaceColor,
@@ -233,14 +233,14 @@ fun Calendar(navController: NavController){
                 }
             }
 
-            // --- 3. Schedule List Header ---
+            // --- Schedule List Header ---
             Text(
                 text = "Schedule for ${uiState.selectedDate.format(DateTimeFormatter.ofPattern("MMM d"))}",
                 modifier = Modifier.padding(16.dp),
                 style = MaterialTheme.typography.titleMedium
             )
 
-            // --- 4. Task List for the Selected Date ---
+            // --- Task List for the Selected Date ---
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),

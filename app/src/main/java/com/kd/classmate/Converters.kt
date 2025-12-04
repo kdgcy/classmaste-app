@@ -29,7 +29,6 @@ class Converters {
 
     @TypeConverter
     fun toLocalTime(timeString: String?): LocalTime? {
-        // We use a simple formatter and truncate to minutes for safety in database storage
         return timeString?.let {
             LocalTime.parse(it, DateTimeFormatter.ISO_LOCAL_TIME)
         }

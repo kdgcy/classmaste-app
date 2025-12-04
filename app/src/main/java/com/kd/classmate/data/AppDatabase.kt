@@ -4,13 +4,13 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverter // NEW IMPORT for TypeConverter functions
+import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import com.kd.classmate.Converters
 import com.kd.classmate.data.subtaskdata.Subtask
 
 
-//New Type Converter for the Enum
+// Type Converter for the Enum
 class TaskTypeConverter {
     @TypeConverter
     fun fromTaskType(value: TaskType): String {
@@ -38,7 +38,6 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(context: Context): AppDatabase {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, AppDatabase::class.java, "classmate_database")
-                    // Destructive migration is required for version change
                     .fallbackToDestructiveMigration()
                     .build()
                     .also { Instance = it }

@@ -52,7 +52,7 @@ fun DashboardMenu(navController: NavController) {
                 }
             )
 
-            // 2. FOCUS MODE (Updated Icon)
+            // 2. FOCUS MODE
             DropdownMenuItem(
                 text = { Text("Focus Mode") },
                 leadingIcon = {
@@ -67,7 +67,6 @@ fun DashboardMenu(navController: NavController) {
                 }
             )
 
-            // VISUAL SEPARATOR
             HorizontalDivider()
 
             // 3. SETTINGS

@@ -17,7 +17,6 @@ interface NotificationScheduler {
 
 class NotificationSchedulerImpl(
     private val context: Context,
-    // 🌟 FIX 1: Correct type to PreferenceManager and make it a private property (val) 🌟
     private val preferenceManager: PreferenceManager
 ) : NotificationScheduler {
 
@@ -39,7 +38,7 @@ class NotificationSchedulerImpl(
             putExtra(EXTRA_TASK_ID, task.id)
             putExtra(EXTRA_TASK_TITLE, task.title)
 
-            // 🌟 CRITICAL FIX: Explicitly set the component for reliable delivery 🌟
+            // Explicitly set the component for reliable delivery
             component = ComponentName(context, NotificationReceiver::class.java)
         }
 
@@ -53,7 +52,6 @@ class NotificationSchedulerImpl(
     }
 
     override fun schedule(task: Task) {
-        // ... (Existing scheduling logic remains the same) ...
         if (!preferenceManager.getMasterNotificationState().value) {
             return
         }
@@ -81,7 +79,7 @@ class NotificationSchedulerImpl(
 
     override fun cancel(taskId: Int) {
         val intent = Intent(context, NotificationReceiver::class.java).apply {
-            // 🌟 FIX: Apply explicit component to cancellation Intent too 🌟
+            // Apply explicit component to cancellation Intent too
             action = ACTION_REMINDER
             component = ComponentName(context, NotificationReceiver::class.java)
         }

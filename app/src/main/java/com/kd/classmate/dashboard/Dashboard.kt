@@ -45,7 +45,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-// --- HELPER FUNCTIONS FOR FORMATTING ---
+// --- HELPER FUNCTIONS FOR FORMATTING start---
 private val shortDateFormatter = DateTimeFormatter.ofPattern("MMM d")
 
 private fun formatDueDate(date: LocalDate?): String {
@@ -54,7 +54,7 @@ private fun formatDueDate(date: LocalDate?): String {
 private fun formatDueTime(time: LocalTime?): String {
     return time?.format(DateTimeFormatter.ofPattern("h:mma")) ?: "Not set"
 }
-// -------------------------------------------
+// --- HELPER FUNCTIONS FOR FORMATTING end ---
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -64,7 +64,7 @@ fun Dashboard(navController: NavController) {
     val viewModel: DashboardViewModel = koinViewModel()
     val uiState = viewModel.uiState.collectAsState().value
 
-    // --- 1. Add Task Dialog Host (omitted for brevity) ---
+    // --- Add Task Dialog Host ---
     if (uiState.isAddDialogVisible) {
         AddTaskDialog(
             taskTitle = uiState.newTaskTitleInput,
@@ -72,7 +72,7 @@ fun Dashboard(navController: NavController) {
             onDismiss = { viewModel.setAddDialogVisibility(false) },
             onAddClick = viewModel::addTask,
 
-            // PICKER PARAMETERS (remains the same)
+            // PICKER PARAMETERS
             selectedDate = uiState.selectedDate,
             selectedTime = uiState.selectedTime,
             isDatePickerVisible = uiState.isDatePickerVisible,
@@ -165,7 +165,7 @@ fun Dashboard(navController: NavController) {
                             ) {
                                 // Column to stack Title and Due Date/Time (Left Side)
                                 Column(modifier = Modifier.weight(1f)) {
-                                    // 1. Task Title (Larger and Bold)
+                                    //  Task Title (Larger and Bold)
                                     Text(
                                         text = task.title,
                                         textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
@@ -173,7 +173,7 @@ fun Dashboard(navController: NavController) {
                                         fontWeight = FontWeight.Bold
                                     )
 
-                                    // 2. Due Date/Time Info (Only display if not completed)
+                                    //  Due Date/Time Info (Only display if not completed)
                                     if (!task.isCompleted) {
                                         Row(
                                             modifier = Modifier.padding(top = 4.dp),

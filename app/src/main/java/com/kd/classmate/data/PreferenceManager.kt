@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import com.kd.classmate.appsetting.FontSize // NEW IMPORT
+import com.kd.classmate.appsetting.FontSize
 
 interface PreferenceManager {
     // Master notification Switch
@@ -16,7 +16,7 @@ interface PreferenceManager {
     fun getDarkModeState(): StateFlow<Boolean>
     fun setDarkModeState(enabled: Boolean)
 
-    // 🌟 NEW: Font Size Switch 🌟
+    // Font Size Switch
     fun getFontSizeState(): StateFlow<FontSize>
     fun setFontSizeState(size: FontSize)
 }
@@ -27,7 +27,7 @@ class PreferenceManagerImpl(context: Context) : PreferenceManager {
 
     private val MASTER_NOTIFICATION_KEY = "master_notification_enabled"
     private val DARK_MODE_KEY = "dark_mode_enabled"
-    private val FONT_SIZE_KEY = "font_size_setting" // 🌟 NEW KEY 🌟
+    private val FONT_SIZE_KEY = "font_size_setting"
 
     private val _isMasterNotificationEnabled = MutableStateFlow(
         prefs.getBoolean(MASTER_NOTIFICATION_KEY, true)
@@ -35,7 +35,7 @@ class PreferenceManagerImpl(context: Context) : PreferenceManager {
     private val _isDarkModeEnabled = MutableStateFlow(
         prefs.getBoolean(DARK_MODE_KEY, false)
     )
-    private val _fontSize = MutableStateFlow( // 🌟 NEW FLOW 🌟
+    private val _fontSize = MutableStateFlow(
         try {
             FontSize.valueOf(prefs.getString(FONT_SIZE_KEY, FontSize.MEDIUM.name) ?: FontSize.MEDIUM.name)
         } catch (e: IllegalArgumentException) {
@@ -56,7 +56,7 @@ class PreferenceManagerImpl(context: Context) : PreferenceManager {
         _isDarkModeEnabled.value = enabled
     }
 
-    // 🌟 NEW: Font Size Logic 🌟
+    //  Font Size Logic
     override fun getFontSizeState(): StateFlow<FontSize> = _fontSize.asStateFlow()
     override fun setFontSizeState(size: FontSize) {
         prefs.edit().putString(FONT_SIZE_KEY, size.name).apply()

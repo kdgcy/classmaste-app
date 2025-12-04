@@ -18,7 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.kd.classmate.appsetting.FontSize // 🌟 NEW IMPORT 🌟
+import com.kd.classmate.appsetting.FontSize
 
 @Composable
 fun FontSizeDialog(

@@ -1,4 +1,3 @@
-// File: ClassmateApplication.kt
 package com.kd.classmate
 
 import android.app.Application
@@ -10,11 +9,7 @@ class ClassmateApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         startKoin {
-            // Log Koin activity to Android Logger
-            // androidLogger(Level.ERROR) // Optional for debugging
-            // Reference the Android context
             androidContext(this@ClassmateApplication)
-            // Load modules
             modules(appModule)
         }
     }

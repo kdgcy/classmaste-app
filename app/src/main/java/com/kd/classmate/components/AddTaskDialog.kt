@@ -6,42 +6,40 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.temporal.ChronoUnit
-// NEW IMPORTS FOR PICKERS
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TimeInput
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDialog
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
-import androidx.compose.material3.TimePicker
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.dp
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,7 +49,6 @@ fun AddTaskDialog(
     onTitleChange: (String) -> Unit,
     onDismiss: () -> Unit,
     onAddClick: () -> Unit,
-    // NEW PICKER PARAMETERS
     selectedDate: LocalDate?,
     selectedTime: LocalTime?,
     isDatePickerVisible: Boolean,
@@ -107,7 +104,7 @@ fun AddTaskDialog(
             initialMinute = LocalTime.now().minute
         )
         TimePickerDialog(
-            // FIX: Add the required 'title' parameter
+            // Add the required 'title' parameter
             title = { Text(text = "Select Time") },
             onDismissRequest = { onTimePickerVisibilityChange(false) },
             confirmButton = {
@@ -131,10 +128,8 @@ fun AddTaskDialog(
         }
     }
 
-    // -------------------------------------------------------------
-    // 2. MAIN ALERT DIALOG
-    // -------------------------------------------------------------
 
+    // Main Alert Dialog
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
         keyboardController?.show()
@@ -182,7 +177,7 @@ fun AddTaskDialog(
                     )
                 )
 
-                // NEW: Display selected Date/Time
+                // Display selected Date/Time
                 if (selectedDate != null || selectedTime != null) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(

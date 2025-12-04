@@ -7,7 +7,7 @@ class TaskRepository(private val taskDao: TaskDao) {
     // R - Read Operation (gets all tasks as a Flow)
     fun getAllTasks(): Flow<List<Task>> = taskDao.getAllTasks()
 
-    // 🌟 FIX 2: Change return type to Long 🌟
+    // Change return type to Long
     suspend fun insertTask(task: Task): Long {
         return taskDao.insertTask(task)
     }

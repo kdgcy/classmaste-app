@@ -131,12 +131,11 @@ class DashboardViewModel(
 
         if (title.isNotEmpty()) {
             viewModelScope.launch {
-                // 🌟 FIX 1: Ensure TaskType.TASK is set when constructing the Task 🌟
                 val newTask = Task(
                     title = title,
                     dueDate = date,
                     dueTime = time,
-                    type = TaskType.TASK // CRITICAL: Identify this task as belonging to the Dashboard
+                    type = TaskType.TASK
                 )
 
                 val newId = repository.insertTask(newTask)
@@ -154,9 +153,7 @@ class DashboardViewModel(
         }
     }
 
-
-    // UPDATE (U) - for marking a task complete/incomplete (REMAINS)
-    // UPDATE (U) - for marking a task complete/incomplete (REMAINS)
+    // UPDATE (U) - for marking a task complete/incomplete
     fun updateTaskCompletion(task: Task) {
         viewModelScope.launch {
             val updatedTask = task.copy(isCompleted = !task.isCompleted)

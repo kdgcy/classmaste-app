@@ -10,7 +10,6 @@ import com.kd.classmate.data.Task
 fun TaskContextMenu(
     task: Task,
     onDismiss: () -> Unit,
-    // 🌟 FIX: Change signature to accept only Task 🌟
     onToggleCompletion: (Task) -> Unit
 ) {
     val newCompletionStatus = !task.isCompleted
@@ -28,6 +27,5 @@ fun TaskContextMenu(
                 onDismiss()
             }
         )
-        // TODO: Add "Edit" and "Delete" actions here if needed later
     }
 }

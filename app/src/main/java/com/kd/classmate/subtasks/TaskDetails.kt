@@ -100,7 +100,7 @@ fun TaskDetails(
     val (dateText, timeText) = formatSchedule(uiState.selectedDate, uiState.selectedTime)
 
 
-    // NEW: Date/Time Picker Hosting
+    // Date/Time Picker Hosting
     DateTimePickerDialogs(
         isDatePickerVisible = uiState.isDatePickerVisible,
         isTimePickerVisible = uiState.isTimePickerVisible,
@@ -216,7 +216,7 @@ fun TaskDetails(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // NEW SECTION: SCHEDULE STATUS DISPLAY
+            // SCHEDULE STATUS DISPLAY
             item {
                 Column(horizontalAlignment = Alignment.Start) {
                     Row(
@@ -224,7 +224,7 @@ fun TaskDetails(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
-                            text = "Due: $dateText", // Now resolved
+                            text = "Due: $dateText",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -237,20 +237,19 @@ fun TaskDetails(
                 }
             }
 
-            // Subtask Header (Separation line)
+            // Subtask Header
             item {
                 HorizontalDivider()
             }
             if (uiState.subtaskList.isEmpty()) {
                 item {
                     Column(
-                        // 🌟 CRITICAL FIX: Use fillParentMaxSize() to make the Column fill the LazyColumn's available height 🌟
                         modifier = Modifier.fillParentMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center // Centers content vertically within the large Column
+                        verticalArrangement = Arrangement.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.FormatListBulleted, // Use List icon
+                            imageVector = Icons.Filled.FormatListBulleted,
                             contentDescription = null,
                             modifier = Modifier.size(48.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
@@ -271,7 +270,6 @@ fun TaskDetails(
             } else {
                 // Subtask List with SWIPE-TO-DELETE
                 items(uiState.subtaskList, key = { it.id }) { subtask ->
-                    // The visibility toggle is still needed for the smooth exit animation
                     var isVisible by remember { mutableStateOf(true) }
 
                     val dismissState = rememberSwipeToDismissBoxState(
@@ -290,7 +288,7 @@ fun TaskDetails(
                         }
                     )
 
-                    // THE MAGIC: CLOSE THIS ROW IF ANOTHER IS OPENED OR BACKGROUND TAPPED
+                    //  CLOSE THIS ROW IF ANOTHER IS OPENED OR BACKGROUND TAPPED
                     LaunchedEffect(revealedSubtaskId) {
                         if (revealedSubtaskId != subtask.id && dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
                             dismissState.snapTo(SwipeToDismissBoxValue.Settled)

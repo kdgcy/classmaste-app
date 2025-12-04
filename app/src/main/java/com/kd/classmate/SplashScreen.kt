@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.School // 🌟 NEW ICON: Represents the cap/graduation 🌟
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -30,12 +29,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.kd.classmate.utils.Routes
 import kotlinx.coroutines.delay
-// NOTE: We assume the background gradient is no longer required based on the final logo image
-// which uses a solid white background and a colored circle.
 
 @Composable
 fun SplashScreen(navController: NavController) {
-    // 1. The Navigation Logic
+    // The Navigation Logic
     LaunchedEffect(Unit) {
         delay(3000) // Adjust delay as needed (3000ms = 3 seconds)
         navController.navigate(Routes.dashboard) {
@@ -43,11 +40,11 @@ fun SplashScreen(navController: NavController) {
         }
     }
 
-    // 2. The UI Design (Matching the provided logo image aesthetic)
+    // The UI Design (Matching the provided logo image aesthetic)
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White), // 🌟 FIX: Solid White Background (as per logo image) 🌟
+            .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -55,16 +52,16 @@ fun SplashScreen(navController: NavController) {
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(horizontal = 32.dp)
         ) {
-            // LOGO (Teal circle background, White icon)
+            // LOGO
             Surface(
                 shape = CircleShape,
-                color = Color(0xFF1FAB89), // 🌟 FIX: Teal/Green background color 🌟
+                color = Color(0xFF1FAB89),
                 modifier = Modifier.size(120.dp),
                 shadowElevation = 10.dp
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = Icons.Filled.School, // 🌟 FIX: Using a generic academic icon 🌟
+                        imageVector = Icons.Filled.School,
                         contentDescription = "ClassMate Logo",
                         tint = Color.White, // White icon
                         modifier = Modifier.size(72.dp)
@@ -84,7 +81,7 @@ fun SplashScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // LOADING BAR (Simplified for the final look)
+            // LOADING BAR
             LinearProgressIndicator(
                 modifier = Modifier
                     .fillMaxWidth(0.6f)

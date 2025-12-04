@@ -144,7 +144,7 @@ class TimerService : LifecycleService(), KoinComponent {
 
         val preferenceManager: PreferenceManager = get()
 
-        // 🌟 MASTER CHECK: Retrieve master state 🌟
+        // Master state
         val isMasterEnabled = preferenceManager.getMasterNotificationState().value
 
         // Check if the user has the sound preference enabled AND the master is enabled
@@ -224,7 +224,7 @@ class TimerService : LifecycleService(), KoinComponent {
             manager.createNotificationChannel(channel)
         }
 
-        // 🌟 FIX: Use Locale for String.format 🌟
+        // Use Locale for String.format
         val formattedTime = String.format(Locale.getDefault(), "%02d:%02d", TimeUnit.SECONDS.toMinutes(_timerState.value.timeRemainingSeconds), _timerState.value.timeRemainingSeconds % 60)
 
         val iconId = android.R.drawable.ic_media_play

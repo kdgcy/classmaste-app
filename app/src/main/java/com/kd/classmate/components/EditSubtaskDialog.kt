@@ -27,7 +27,7 @@ fun EditSubtaskDialog(
     onTitleChange: (String) -> Unit,
     onCancel: () -> Unit,
     onSaveClick: () -> Unit,
-    // REMOVED: onDeleteClick: () -> Unit
+    // onDeleteClick: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current

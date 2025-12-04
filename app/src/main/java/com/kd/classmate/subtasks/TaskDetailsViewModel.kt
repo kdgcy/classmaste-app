@@ -63,7 +63,7 @@ class TaskDetailsViewModel(
     private val _isSubtaskEditDialogVisible = MutableStateFlow(false)
     private val _editSubtaskTitleInput = MutableStateFlow("")
 
-    // 🌟 NEW: Internal Date/Time flows 🌟
+    // Internal Date/Time flows
     private val _isDatePickerVisible = MutableStateFlow(false)
     private val _isTimePickerVisible = MutableStateFlow(false)
     private val _selectedDate = MutableStateFlow<LocalDate?>(null)
@@ -95,7 +95,7 @@ class TaskDetailsViewModel(
             isSubtaskEditDialogVisible = args[8] as Boolean,
             editSubtaskTitleInput = args[9] as String,
 
-            // NEW State Initialization
+            // State Initialization
             isDatePickerVisible = args[10] as Boolean,
             isTimePickerVisible = args[11] as Boolean,
             selectedDate = args[12] as LocalDate?,
@@ -128,7 +128,7 @@ class TaskDetailsViewModel(
         }
     }
 
-    // --- 🌟 NEW: Date/Time Update Functions 🌟 ---
+    // --- NEW: Date/Time Update Functions ---
 
     fun setDatePickerVisibility(isVisible: Boolean) {
         _isDatePickerVisible.value = isVisible
@@ -141,9 +141,6 @@ class TaskDetailsViewModel(
     // FIX 1: Corrected conditional logic
     fun updateSelectedDate(date: LocalDate) {
         _selectedDate.value = date
-
-        // FIX: The Time Picker MUST appear if the date was just set, regardless of whether a time was set previously.
-        // This ensures the user can review/confirm/change the time, or that the Time Picker appears if they skipped it initially.
         viewModelScope.launch {
             delay(300L)
             setTimePickerVisibility(true)
@@ -166,7 +163,7 @@ class TaskDetailsViewModel(
                 val updatedTask = task.copy(dueDate = date, dueTime = time)
                 repository.updateTask(updatedTask)
 
-                // 🌟 NEW: Schedule/Reschedule the alarm 🌟
+                //  Schedule/Reschedule the alarm
                 if (date != null && time != null) {
                     notificationScheduler.schedule(updatedTask)
                 } else {
@@ -176,7 +173,7 @@ class TaskDetailsViewModel(
         }
     }
 
-    // --- NEW SUBTASK EDIT FUNCTIONS ---
+    // --- SUBTASK EDIT FUNCTIONS ---
 
     fun startEditSubtask(subtask: Subtask) {
         _subtaskBeingEdited.value = subtask
@@ -209,7 +206,7 @@ class TaskDetailsViewModel(
         }
     }
 
-    // --- NEW SUBTASK DELETE FUNCTION ---
+    // --- SUBTASK DELETE FUNCTION ---
 
     fun deleteSubtask(subtask: Subtask) {
         viewModelScope.launch {
@@ -244,7 +241,6 @@ class TaskDetailsViewModel(
         }
     }
 
-    // --- (Edit and Delete functions remain the same) ---
     fun showDeleteConfirmation() { _isDeleteConfirmationVisible.value = true }
     fun hideDeleteConfirmation() { _isDeleteConfirmationVisible.value = false }
     fun startEdit() {

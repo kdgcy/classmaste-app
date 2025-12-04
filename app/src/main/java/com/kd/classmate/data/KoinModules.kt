@@ -28,7 +28,7 @@ val appModule = module {
     single<NotificationScheduler> {
         NotificationSchedulerImpl(
             context = androidContext(),
-            preferenceManager = get() // Inject the PreferenceManager here
+            preferenceManager = get()
         )
     }
     single<WakeLockManager> { WakeLockManagerImpl(androidContext()) }

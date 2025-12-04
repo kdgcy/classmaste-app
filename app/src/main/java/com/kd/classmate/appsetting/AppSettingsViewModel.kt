@@ -6,16 +6,15 @@ import com.kd.classmate.data.PreferenceManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
-// Data class to hold the necessary settings states (MODIFIED)
+// Data class to hold the necessary settings states
 data class AppSettingsUiState(
     val isMasterNotificationEnabled: Boolean = true,
     val isDarkModeEnabled: Boolean = false,
-    val selectedFontSize: FontSize = FontSize.MEDIUM, // 🌟 NEW FIELD 🌟
-    val isFontSizeDialogVisible: Boolean = false // 🌟 NEW FIELD for UI control 🌟
+    val selectedFontSize: FontSize = FontSize.MEDIUM,
+    val isFontSizeDialogVisible: Boolean = false
 )
 
 class AppSettingsViewModel(
