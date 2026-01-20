@@ -16,7 +16,6 @@ class SubtaskRepository(private val subtaskDao: SubtaskDao) {
         subtaskDao.updateSubtask(subtask)
     }
 
-    // NEW: Delete Operation
     suspend fun deleteSubtask(subtask: Subtask) {
         subtaskDao.deleteSubtask(subtask)
     }

@@ -54,7 +54,7 @@ class AppSettingsViewModel(
         preferenceManager.setDarkModeState(enabled)
     }
 
-    // 🌟 NEW: Font Size Logic 🌟
+    //Font Size Logic
     fun setFontSizeDialogVisibility(isVisible: Boolean) {
         _isFontSizeDialogVisible.value = isVisible
     }
