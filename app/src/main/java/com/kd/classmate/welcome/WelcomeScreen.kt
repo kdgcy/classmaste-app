@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -65,6 +66,14 @@ fun WelcomeScreenB() {
             text = "Welcome Screen A",
             style = MaterialTheme.typography.bodyMedium
         )
+
+        Spacer(modifier = Modifier.height(15.dp))
+
+        Button(
+            onClick = {
+                //implement boolean Later for the first time user
+            }
+        ) { Text("Get Started") }
     }
 }
 
@@ -85,15 +94,16 @@ fun OnboardingPage() {
             }
         }
 
-        //The Page Indicator
+        //Page Indicator
         Row(
             modifier = Modifier
                 .height(50.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
-            repeat(pagerState.currentPage ) { iteration ->
-                val color = if(pagerState.currentPage == iteration) Color.DarkGray else Color.LightGray
+            // Repeat based on TOTAL count
+            repeat(pagerState.pageCount) { iteration ->
+                val color = if (pagerState.currentPage == iteration) Color.DarkGray else Color.LightGray
 
                 Box(
                     modifier = Modifier
