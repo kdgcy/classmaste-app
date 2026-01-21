@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,60 +26,96 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.kd.classmate.R
 
+
 @Composable
-fun WelcomeScreenA() {
+fun WelcomeImage() {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxSize()
     ) {
         Image(
-            painter = painterResource(R.drawable.todo),
-            contentDescription = "Sample Image 1"
+            painter = painterResource(R.drawable.welcomeimg),
+            contentDescription = "First time user welcome image"
         )
 
         Spacer(modifier = Modifier.height(15.dp))
 
         Text(
-            text = "Welcome Screen A",
-            style = MaterialTheme.typography.bodyMedium
+            text = "Welcome to ClassMate",
+            style = MaterialTheme.typography.titleMedium
         )
     }
 }
 
 @Composable
-fun WelcomeScreenB() {
+fun TaskManagement() {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxSize()
     ) {
         Image(
-            painter = painterResource(R.drawable.todo),
-            contentDescription = "Sample Image 2"
+            painter = painterResource(R.drawable.taskmanagement),
+            contentDescription = "Task Management"
         )
 
         Spacer(modifier = Modifier.height(15.dp))
 
         Text(
-            text = "Welcome Screen A",
-            style = MaterialTheme.typography.bodyMedium
+            text = "Master Your Workload with Tasks & Subtasks",
+            style = MaterialTheme.typography.titleMedium
+        )
+    }
+}
+
+@Composable
+fun SetDeadline(){
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Image(
+            painter = painterResource(R.drawable.deadline),
+            contentDescription = "Deadline"
         )
 
         Spacer(modifier = Modifier.height(15.dp))
 
-        Button(
-            onClick = {
-                //implement boolean Later for the first time user
-            }
-        ) { Text("Get Started") }
+        Text(
+            text = "Never Miss a Deadline with Smart Reminders",
+            style = MaterialTheme.typography.titleMedium
+        )
     }
 }
 
+@Composable
+fun TaskAppointment() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Image(
+            painter = painterResource(R.drawable.taskapp),
+            contentDescription = "Task Appointment"
+        )
+
+        Spacer(modifier = Modifier.height(15.dp))
+
+        Text(
+            text = "Organize Your Schedule & Appointments",
+            style = MaterialTheme.typography.titleMedium
+        )
+    }
+}
+
+//Onboarding Flow
 @Composable
 fun OnboardingPage() {
     //Define the state for pages
-    val pagerState = rememberPagerState(pageCount = {2})
+    val pagerState = rememberPagerState(pageCount = { 4 }) //set the page
 
     Column(modifier = Modifier.fillMaxSize()) {
         //The HorizontalPager
@@ -89,8 +124,10 @@ fun OnboardingPage() {
             modifier = Modifier.weight(1f)
         ) { page ->
             when(page) {
-                0 -> WelcomeScreenA()
-                1 -> WelcomeScreenB()
+                0 -> WelcomeImage()
+                1 -> TaskManagement()
+                2 -> TaskAppointment()
+                3 -> SetDeadline()
             }
         }
 
