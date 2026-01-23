@@ -20,6 +20,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,16 +29,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.kd.classmate.data.PreferenceManager
 import com.kd.classmate.utils.Routes
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(navController: NavController) {
+
+    // Access the PreferenceManager via Koin
+    val preferenceManager: PreferenceManager = org.koin.compose.koinInject() //
+    val isFirstLaunch by preferenceManager.getIsFirstLaunch().collectAsState() //
+
     // The Navigation Logic
     LaunchedEffect(Unit) {
-        delay(3000) // Adjust delay as needed (3000ms = 3 seconds)
-        navController.navigate(Routes.dashboard) {
-            popUpTo(Routes.splash) { inclusive = true }
+        delay(3000)
+
+        val destination = if (isFirstLaunch) Routes.onboarding else Routes.dashboard //
+
+        navController.navigate(destination) {
+            popUpTo(Routes.splash) { inclusive = true } //
         }
     }
 

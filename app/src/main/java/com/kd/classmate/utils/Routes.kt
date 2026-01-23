@@ -7,6 +7,7 @@ object Routes {
     val appsettings = "appSettings"
     val splash = "splash"
     val about = "about"
+    val onboarding = "onboarding"
     val taskDetails = "taskDetails/{taskId}"
 
     // Helper function to create the actual path with the task ID

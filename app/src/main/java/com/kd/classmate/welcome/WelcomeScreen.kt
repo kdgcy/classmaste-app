@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.kd.classmate.R
 
@@ -43,7 +44,7 @@ fun WelcomeImage() {
 
         Text(
             text = "Welcome to ClassMate",
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.displaySmall
         )
     }
 }
@@ -64,6 +65,14 @@ fun TaskManagement() {
 
         Text(
             text = "Master Your Workload with Tasks & Subtasks",
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(15.dp))
+
+        Text(
+            text = "Organize your key tasks in one place.",
             style = MaterialTheme.typography.titleMedium
         )
     }
@@ -81,11 +90,20 @@ fun SetDeadline(){
             contentDescription = "Deadline"
         )
 
-        Spacer(modifier = Modifier.height(15.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Text(
             text = "Never Miss a Deadline with Smart Reminders",
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(15.dp))
+
+        Text(
+            text = "This app may need additional permission to send notification, you can change these in settings.",
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center
         )
     }
 }
@@ -106,6 +124,15 @@ fun TaskAppointment() {
 
         Text(
             text = "Organize Your Schedule & Appointments",
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center
+        )
+
+
+        Spacer(modifier = Modifier.height(15.dp))
+
+        Text(
+            text = "Add date and time in your calendar",
             style = MaterialTheme.typography.titleMedium
         )
     }
@@ -113,7 +140,7 @@ fun TaskAppointment() {
 
 //Onboarding Flow
 @Composable
-fun OnboardingPage() {
+fun OnboardingPage(onFinished: () -> Unit) {
     //Define the state for pages
     val pagerState = rememberPagerState(pageCount = { 4 }) //set the page
 
@@ -141,7 +168,6 @@ fun OnboardingPage() {
             // Repeat based on TOTAL count
             repeat(pagerState.pageCount) { iteration ->
                 val color = if (pagerState.currentPage == iteration) Color.DarkGray else Color.LightGray
-
                 Box(
                     modifier = Modifier
                         .padding(2.dp)
@@ -149,6 +175,25 @@ fun OnboardingPage() {
                         .background(color)
                         .size(8.dp)
                 )
+            }
+        }
+
+        // Get Started Button here
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .height(64.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            // Magpapakita lang itong button kapag nasa last page
+            if(pagerState.currentPage == 3) {
+                androidx.compose.material3.Button(
+                    onClick = onFinished,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Get Started")
+                }
             }
         }
         Spacer(modifier = Modifier.height(25.dp))

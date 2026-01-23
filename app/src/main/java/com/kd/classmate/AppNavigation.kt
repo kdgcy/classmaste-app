@@ -15,46 +15,63 @@ import com.kd.classmate.dashboard.Dashboard
 import com.kd.classmate.pomodoro.Pomodoro
 import com.kd.classmate.subtasks.TaskDetails
 import com.kd.classmate.utils.Routes
+import com.kd.classmate.welcome.OnboardingPage
 
 @Composable
 fun AppNavigation(){
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Routes.splash) {
 
+        //Splash Screen
         composable(
             Routes.splash,
             enterTransition = {fadeIn(tween(100)) },
             exitTransition = {fadeOut(tween(100)) }
         ){ SplashScreen(navController) }
+
+        //Dashboard Screen
         composable(
             Routes.dashboard,
             enterTransition = {fadeIn(tween(100)) },
             exitTransition = {fadeOut(tween(100)) }
         ) { Dashboard(navController) }
 
+        //Calendar Screen
         composable(
             Routes.calendar,
             enterTransition = {fadeIn(tween(100)) },
             exitTransition = {fadeOut(tween(100)) }
         ) { Calendar(navController) }
 
+        //Pomodoro Screen
         composable(
             Routes.pomodoro,
             enterTransition = {fadeIn(tween(100)) },
             exitTransition = {fadeOut(tween(100)) }
         ) { Pomodoro(navController) }
 
+        //Application Settings Screen
         composable(
             Routes.appsettings,
             enterTransition = {fadeIn(tween(100)) },
             exitTransition = {fadeOut(tween(100)) }
         ) { AppSettings(navController) }
 
+        //About Screen
         composable(
             Routes.about,
             enterTransition = {fadeIn(tween(100)) },
             exitTransition = {fadeOut(tween(100)) }
         ){ AboutApp(navController) }
+
+        composable(Routes.onboarding) {
+            OnboardingPage(onFinished = {
+                navController.navigate(Routes.dashboard) {
+                    // Prevent user from going back to onboarding
+                    popUpTo(Routes.onboarding) { inclusive = true }
+                }
+            })
+        }
 
         // TaskDetails
         composable(

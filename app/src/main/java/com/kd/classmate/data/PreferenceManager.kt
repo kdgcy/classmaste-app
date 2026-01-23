@@ -19,12 +19,22 @@ interface PreferenceManager {
     // Font Size Switch
     fun getFontSizeState(): StateFlow<FontSize>
     fun setFontSizeState(size: FontSize)
+
+    //Onboarding Flow for first time user
+    fun getIsFirstLaunch(): StateFlow<Boolean>
+    fun setFirstLaunchCompleted()
 }
 
 class PreferenceManagerImpl(context: Context) : PreferenceManager {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
 
+
+    //DEFINE KEYS HERE
+    private val FIRST_LAUNCH_KEY = "is_first_launch"
+    private val _isFirstLaunch = MutableStateFlow(
+        prefs.getBoolean(FIRST_LAUNCH_KEY, true) // Default is true
+    )
     private val MASTER_NOTIFICATION_KEY = "master_notification_enabled"
     private val DARK_MODE_KEY = "dark_mode_enabled"
     private val FONT_SIZE_KEY = "font_size_setting"
@@ -42,6 +52,15 @@ class PreferenceManagerImpl(context: Context) : PreferenceManager {
             FontSize.MEDIUM
         }
     )
+
+
+    //
+    override fun getIsFirstLaunch(): StateFlow<Boolean> = _isFirstLaunch.asStateFlow() //
+
+    override fun setFirstLaunchCompleted() {
+        prefs.edit().putBoolean(FIRST_LAUNCH_KEY, false).apply() // Set to false permanently
+        _isFirstLaunch.value = false //
+    }
 
     override fun getMasterNotificationState(): StateFlow<Boolean> = _isMasterNotificationEnabled.asStateFlow()
     override fun setMasterNotificationState(enabled: Boolean) {
