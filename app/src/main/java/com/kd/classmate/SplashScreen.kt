@@ -37,13 +37,13 @@ import kotlinx.coroutines.delay
 fun SplashScreen(navController: NavController) {
 
     // Access the PreferenceManager via Koin
-    val preferenceManager: PreferenceManager = org.koin.compose.koinInject() //
-    val isFirstLaunch by preferenceManager.getIsFirstLaunch().collectAsState() //
+    val preferenceManager: PreferenceManager = org.koin.compose.koinInject()
 
     // The Navigation Logic
     LaunchedEffect(Unit) {
         delay(3000)
 
+        val isFirstLaunch = preferenceManager.getIsFirstLaunch().value
         val destination = if (isFirstLaunch) Routes.onboarding else Routes.dashboard //
 
         navController.navigate(destination) {

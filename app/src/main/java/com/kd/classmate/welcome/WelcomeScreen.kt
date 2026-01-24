@@ -141,8 +141,11 @@ fun TaskAppointment() {
 //Onboarding Flow
 @Composable
 fun OnboardingPage(onFinished: () -> Unit) {
-    //Define the state for pages
-    val pagerState = rememberPagerState(pageCount = { 4 }) //set the page
+    //Injecting PreferenceManager
+    val preferenceManager: com.kd.classmate.data.PreferenceManager = org.koin.compose.koinInject()
+
+    //Defining the state for pages
+    val pagerState = rememberPagerState(pageCount = { 4 })
 
     Column(modifier = Modifier.fillMaxSize()) {
         //The HorizontalPager
@@ -189,7 +192,10 @@ fun OnboardingPage(onFinished: () -> Unit) {
             // Magpapakita lang itong button kapag nasa last page
             if(pagerState.currentPage == 3) {
                 androidx.compose.material3.Button(
-                    onClick = onFinished,
+                    onClick = {
+                        preferenceManager.setFirstLaunchCompleted()
+                        onFinished()
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Get Started")
