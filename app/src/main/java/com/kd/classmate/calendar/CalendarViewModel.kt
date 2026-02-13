@@ -21,6 +21,7 @@ data class CalendarUiState(
     val scheduledTasks: List<Task> = emptyList(),
     val selectedDate: LocalDate = LocalDate.now(),
     val isLoading: Boolean = true,
+    val allAppointmentDates: Set<LocalDate> = emptySet(),
 
     // New Appointment Dialog State
     val isAppointmentDialogVisible: Boolean = false,
@@ -66,19 +67,21 @@ class CalendarViewModel(
     ) { args -> // Lambda now accepts a single Array<Any?> argument
         val allTasks = args[0] as List<Task>
         val selectedDate = args[1] as LocalDate
-        val isVisible = args[2] as Boolean
-        val title = args[3] as String
-        val time = args[4] as LocalTime
-        val isTimeVisible = args[5] as Boolean
 
-        val filteredTasks = allTasks
+        val allAppointmentDates = allTasks
+            .filter { it.type == TaskType.APPOINTMENT && !it.isCompleted }
+            .mapNotNull { it.dueDate }
+            .toSet()
+
+        val filteredTasksForSelectedDate = allTasks
             .filter { it.type == TaskType.APPOINTMENT }
             .filter { !it.isCompleted && it.dueDate == selectedDate }
-            .sortedWith(compareBy { it.dueTime })
+            .sortedBy { it.dueTime }
 
         CalendarUiState(
-            scheduledTasks = filteredTasks,
+            scheduledTasks = filteredTasksForSelectedDate,
             selectedDate = selectedDate,
+            allAppointmentDates = allAppointmentDates, // PASS THE NEW SET
             isLoading = false,
             isAppointmentDialogVisible = args[2] as Boolean,
             newAppointmentTitleInput = args[3] as String,

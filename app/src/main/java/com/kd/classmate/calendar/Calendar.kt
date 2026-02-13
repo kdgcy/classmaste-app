@@ -1,14 +1,17 @@
 package com.kd.classmate.calendar
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -135,7 +138,6 @@ fun Calendar(navController: NavController){
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-
             // --- Monthly Navigation and Header ---
             Row(
                 modifier = Modifier
@@ -194,7 +196,8 @@ fun Calendar(navController: NavController){
                                     val isSelected = date == uiState.selectedDate
                                     // Check if the date is in the past
                                     val isPastDate = date.isBefore(today)
-
+                                    //Check if this specific day has an appointment
+                                    val hasAppointment = uiState.allAppointmentDates.contains(date)
                                     val clickEnabled = !isPastDate
 
                                     // Determine colors
@@ -210,20 +213,48 @@ fun Calendar(navController: NavController){
                                         else -> MaterialTheme.colorScheme.onSurface
                                     }
 
-                                    Surface(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            // Click only if NOT a past date
-                                            .clickable(enabled = clickEnabled) { viewModel.setSelectedDate(date) },
-                                        shape = CircleShape,
-                                        color = surfaceColor,
-                                        contentColor = contentColor
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
                                     ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Text(
-                                                text = date.dayOfMonth.toString(),
-                                                style = MaterialTheme.typography.bodyLarge
+                                        Surface(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clickable(enabled = !isPastDate) {
+                                                    viewModel.setSelectedDate(
+                                                        date
+                                                    )
+                                                },
+                                            shape = CircleShape,
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else
+                                                if (isPastDate) MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                    alpha = 0.3f
+                                                )
+                                                else MaterialTheme.colorScheme.onSurface
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Text(
+                                                    text = date.dayOfMonth.toString(),
+                                                    style = MaterialTheme.typography.bodyLarge
+                                                )
+                                            }
+                                        }
+                                        if (hasAppointment && !isPastDate) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .padding(top = 2.dp)
+                                                    .size(4.dp)
+                                                    .background(
+                                                        // Use a distinct color like Secondary or Tertiary
+                                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                                        else MaterialTheme.colorScheme.secondary,
+                                                        shape = CircleShape
+                                                    )
                                             )
+                                        } else {
+                                            // Keep spacing consistent even if there's no dot
+                                            Spacer(modifier = Modifier.height(6.dp))
                                         }
                                     }
                                 }
