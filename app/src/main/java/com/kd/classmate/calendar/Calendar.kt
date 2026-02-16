@@ -2,35 +2,13 @@ package com.kd.classmate.calendar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material3.Card
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -47,30 +25,18 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 
-
-// Helper functions for formatting (omitted for brevity)
 private val monthYearFormatter = DateTimeFormatter.ofPattern("MMMM yyyy")
-private val dateFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d")
 private val timeFormatter = DateTimeFormatter.ofPattern("h:mma")
-private val today = LocalDate.now() // Define today here for reuse
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Calendar(navController: NavController){
+fun Calendar(navController: NavController) {
 
     val viewModel: CalendarViewModel = koinViewModel()
     val uiState = viewModel.uiState.collectAsState().value
     val today = LocalDate.now()
 
-    // Determine the first day of the month currently displayed
-    val firstDayOfMonth = uiState.selectedDate.with(TemporalAdjusters.firstDayOfMonth())
-    val daysInMonth = firstDayOfMonth.lengthOfMonth()
-    val startDayOffset = if (firstDayOfMonth.dayOfWeek == DayOfWeek.SUNDAY) 0 else firstDayOfMonth.dayOfWeek.value
-    val totalCells = daysInMonth + startDayOffset
-    val numRows = (totalCells + 6) / 7
-
-    // --- Appointment Dialog Host  ---
+    // --- Dialogs (Edit/New) ---
     uiState.appointmentBeingEdited?.let { appointment ->
         if (uiState.isEditAppointmentDialogVisible) {
             EditAppointmentDialog(
@@ -88,7 +54,6 @@ fun Calendar(navController: NavController){
         }
     }
 
-    // --- Appointment Dialog Host ---
     if (uiState.isAppointmentDialogVisible) {
         NewAppointmentDialog(
             selectedDate = uiState.selectedDate,
@@ -103,209 +68,149 @@ fun Calendar(navController: NavController){
         )
     }
 
-    // Create a list of days, including leading nulls
-    val calendarDays = mutableListOf<LocalDate?>()
-
-    // Add leading empty slots
-    for (i in 0 until startDayOffset) {
-        calendarDays.add(null)
-    }
-    // Add days of the month
-    for (day in 1..daysInMonth) {
-        calendarDays.add(firstDayOfMonth.withDayOfMonth(day))
-    }
-
-
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(text = "Schedule") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(imageVector = Icons.Filled.ArrowBackIosNew,contentDescription = null)
+            Column {
+                CenterAlignedTopAppBar(
+                    title = { Text(text = "Schedule") },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.navigateUp() }) {
+                            Icon(Icons.Filled.ArrowBackIosNew, contentDescription = null)
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.setAppointmentDialogVisibility(true) }) {
+                            Icon(Icons.Filled.Add, contentDescription = null)
+                        }
                     }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.setAppointmentDialogVisibility(true) }) {
-                        Icon(imageVector = Icons.Filled.Add, contentDescription = null)
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // --- Monthly Navigation and Header ---
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                IconButton(onClick = { viewModel.setSelectedDate(uiState.selectedDate.minusMonths(1)) }) {
-                    Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous Month")
-                }
-                Text(
-                    text = uiState.selectedDate.format(monthYearFormatter),
-                    style = MaterialTheme.typography.titleLarge
                 )
-                IconButton(onClick = { viewModel.setSelectedDate(uiState.selectedDate.plusMonths(1)) }) {
-                    Icon(Icons.Filled.ChevronRight, contentDescription = "Next Month")
-                }
-            }
-
-            // --- Calendar Grid ---
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            ) {
-                // Day of Week Header (S, M, T, W, T, F, S)
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    // FIX: Render days starting from Sunday
-                    val days = listOf("S", "M", "T", "W", "T", "F", "S")
-                    days.forEach { dayLetter ->
-                        Text(
-                            text = dayLetter,
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
+                // THE VIEW SWITCHER TABS
+                TabRow(selectedTabIndex = uiState.currentView.ordinal) {
+                    CalendarView.values().forEach { view ->
+                        Tab(
+                            selected = uiState.currentView == view,
+                            onClick = { viewModel.setCalendarView(view) },
+                            text = { Text(view.name) }
                         )
                     }
                 }
+            }
+        }
+    ) { paddingValues ->
 
-                // Days Grid
-                repeat(numRows) { rowIndex ->
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        repeat(7) { dayOfWeekIndex ->
-                            val cellIndex = rowIndex * 7 + dayOfWeekIndex
-                            val dayDate = calendarDays.getOrNull(cellIndex)
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            // DYNAMIC CONTENT SWITCHING
+            when (uiState.currentView) {
+                CalendarView.MONTH -> {
+                    MonthViewContent(uiState, viewModel, today)
+                }
+                CalendarView.WEEK -> {
+                    WeekView(
+                        uiState = uiState,
+                        onDateSelected = { viewModel.setSelectedDate(it) },
+                        onTaskClick = { viewModel.startEditAppointment(it) }
+                    )
+                }
+                CalendarView.DAY -> {
+                    DayView(
+                        uiState = uiState,
+                        onTaskClick = { viewModel.startEditAppointment(it) }
+                    )
+                }
+            }
+        }
+    }
+}
 
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .aspectRatio(1f), // Make cells square
-                                contentAlignment = Alignment.Center
-                            ) {
-                                dayDate?.let { date ->
-                                    val isSelected = date == uiState.selectedDate
-                                    // Check if the date is in the past
-                                    val isPastDate = date.isBefore(today)
-                                    //Check if this specific day has an appointment
-                                    val hasAppointment = uiState.allAppointmentDates.contains(date)
-                                    val clickEnabled = !isPastDate
+@Composable
+fun MonthViewContent(uiState: CalendarUiState, viewModel: CalendarViewModel, today: LocalDate) {
+    val firstDayOfMonth = uiState.selectedDate.with(TemporalAdjusters.firstDayOfMonth())
+    val daysInMonth = firstDayOfMonth.lengthOfMonth()
+    val startDayOffset = if (firstDayOfMonth.dayOfWeek == DayOfWeek.SUNDAY) 0 else firstDayOfMonth.dayOfWeek.value
+    val calendarDays = mutableListOf<LocalDate?>().apply {
+        repeat(startDayOffset) { add(null) }
+        for (day in 1..daysInMonth) { add(firstDayOfMonth.withDayOfMonth(day)) }
+    }
+    val numRows = (calendarDays.size + 6) / 7
 
-                                    // Determine colors
-                                    val surfaceColor = when {
-                                        isSelected -> MaterialTheme.colorScheme.primary
-                                        isPastDate -> Color.Transparent
-                                        else -> Color.Transparent
-                                    }
+    Column {
+        // Month Navigation
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            IconButton(onClick = { viewModel.setSelectedDate(uiState.selectedDate.minusMonths(1)) }) {
+                Icon(Icons.Filled.ChevronLeft, contentDescription = null)
+            }
+            Text(uiState.selectedDate.format(monthYearFormatter), style = MaterialTheme.typography.titleLarge)
+            IconButton(onClick = { viewModel.setSelectedDate(uiState.selectedDate.plusMonths(1)) }) {
+                Icon(Icons.Filled.ChevronRight, contentDescription = null)
+            }
+        }
 
-                                    val contentColor = when {
-                                        isSelected -> MaterialTheme.colorScheme.onPrimary
-                                        isPastDate -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f) // Gray out text
-                                        else -> MaterialTheme.colorScheme.onSurface
-                                    }
-
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.Center
-                                    ) {
-                                        Surface(
-                                            modifier = Modifier
-                                                .size(36.dp)
-                                                .clickable(enabled = !isPastDate) {
-                                                    viewModel.setSelectedDate(
-                                                        date
-                                                    )
-                                                },
-                                            shape = CircleShape,
-                                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else
-                                                if (isPastDate) MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                                    alpha = 0.3f
-                                                )
-                                                else MaterialTheme.colorScheme.onSurface
-                                        ) {
-                                            Box(contentAlignment = Alignment.Center) {
-                                                Text(
-                                                    text = date.dayOfMonth.toString(),
-                                                    style = MaterialTheme.typography.bodyLarge
-                                                )
-                                            }
-                                        }
-                                        if (hasAppointment && !isPastDate) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .padding(top = 2.dp)
-                                                    .size(4.dp)
-                                                    .background(
-                                                        // Use a distinct color like Secondary or Tertiary
-                                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary
-                                                        else MaterialTheme.colorScheme.secondary,
-                                                        shape = CircleShape
-                                                    )
-                                            )
-                                        } else {
-                                            // Keep spacing consistent even if there's no dot
-                                            Spacer(modifier = Modifier.height(6.dp))
-                                        }
-                                    }
-                                }
+        // Grid
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                listOf("S", "M", "T", "W", "T", "F", "S").forEach { day ->
+                    Text(day, Modifier.weight(1f), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            repeat(numRows) { rowIndex ->
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    repeat(7) { colIndex ->
+                        val cellIndex = rowIndex * 7 + colIndex
+                        val date = calendarDays.getOrNull(cellIndex)
+                        Box(Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) {
+                            date?.let { dayDate ->
+                                CalendarDayItem(dayDate, uiState, today, viewModel)
                             }
                         }
                     }
                 }
             }
+        }
 
-            // --- Schedule List Header ---
-            Text(
-                text = "Schedule for ${uiState.selectedDate.format(DateTimeFormatter.ofPattern("MMM d"))}",
-                modifier = Modifier.padding(16.dp),
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            // --- Task List for the Selected Date ---
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (uiState.isLoading) {
-                    item { Text("Loading schedule...") }
-                } else if (uiState.scheduledTasks.isEmpty()) {
-                    item { Text("No appointments scheduled for this date.") }
-                } else {
-                    items(uiState.scheduledTasks) { appointment ->
-                        Card(
-                            // Make card clickable to start edit process
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { viewModel.startEditAppointment(appointment) }
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = appointment.title,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                appointment.dueTime?.let { time ->
-                                    Text(
-                                        text = time.format(timeFormatter),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
+        // Daily Schedule Header and List
+        Text("Schedule for ${uiState.selectedDate.format(DateTimeFormatter.ofPattern("MMM d"))}", Modifier.padding(16.dp))
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (uiState.scheduledTasks.isEmpty()) {
+                item { Text("No appointments scheduled.") }
+            } else {
+                items(uiState.scheduledTasks) { appointment ->
+                    Card(Modifier.fillMaxWidth().clickable { viewModel.startEditAppointment(appointment) }) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(appointment.title, style = MaterialTheme.typography.titleMedium)
+                            Text(appointment.dueTime?.format(timeFormatter) ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun CalendarDayItem(date: LocalDate, uiState: CalendarUiState, today: LocalDate, viewModel: CalendarViewModel) {
+    val isSelected = date == uiState.selectedDate
+    val isPastDate = date.isBefore(today)
+    val hasAppointment = uiState.allAppointmentDates.contains(date)
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Surface(
+            modifier = Modifier.size(36.dp).clickable(enabled = !isPastDate) { viewModel.setSelectedDate(date) },
+            shape = CircleShape,
+            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else if (isPastDate) Color.LightGray else MaterialTheme.colorScheme.onSurface
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(date.dayOfMonth.toString(), style = MaterialTheme.typography.bodyLarge)
+            }
+        }
+        if (hasAppointment && !isPastDate) {
+            Box(Modifier.padding(top = 2.dp).size(4.dp).background(if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.secondary, CircleShape))
+        } else {
+            Spacer(Modifier.height(6.dp))
         }
     }
 }
