@@ -114,6 +114,7 @@ fun Calendar(navController: NavController) {
                 CalendarView.DAY -> {
                     DayView(
                         uiState = uiState,
+                        onDateChanged = { newDate -> viewModel.setSelectedDate(newDate) }, // Update ViewModel on swipe
                         onTaskClick = { viewModel.startEditAppointment(it) }
                     )
                 }

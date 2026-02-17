@@ -60,7 +60,7 @@ fun WeekView(
                         contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text(text = date.dayOfMonth.toString(), fontWeight = FontWeight.Bold)
+                            Text(text = date.dayOfMonth.toString(), fontWeight = FontWeight.Normal)
                         }
                     }
                 }
