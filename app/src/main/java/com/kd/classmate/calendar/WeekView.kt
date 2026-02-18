@@ -42,22 +42,20 @@ fun WeekView(
         ) {
             weekDays.forEach { date ->
                 val isSelected = date == uiState.selectedDate
-                val isPastDate = date.isBefore(today) // Check if past
-                val hasAppointment = uiState.allAppointmentDates.contains(date) // Check for dots
-                val dayName = date.dayOfWeek.name.take(1)
+                val isPastDate = date.isBefore(today) //
+                val hasAppointment = uiState.allAppointmentDates.contains(date) //
+                val dayName = date.dayOfWeek.name.take(1) //
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable(enabled = !isPastDate) { onDateSelected(date) } // Disable click
+                    // Functional restriction: keep click disabled for past dates
+                    modifier = Modifier.clickable(enabled = !isPastDate) { onDateSelected(date) }
                 ) {
                     Text(
                         text = dayName,
                         style = MaterialTheme.typography.labelMedium,
-                        color = when {
-                            isSelected -> MaterialTheme.colorScheme.primary
-                            isPastDate -> Color.LightGray.copy(alpha = 0.5f) // Gray out past
-                            else -> Color.Gray
-                        }
+                        // FIX: Only change color if selected; do NOT gray out for past dates
+                        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Surface(
@@ -66,7 +64,8 @@ fun WeekView(
                         color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
                         contentColor = when {
                             isSelected -> MaterialTheme.colorScheme.onPrimary
-                            isPastDate -> Color.LightGray.copy(alpha = 0.5f) // Gray out past
+                            // Visual restriction: only gray out the date circle for past dates
+                            isPastDate -> Color.LightGray.copy(alpha = 0.5f)
                             else -> MaterialTheme.colorScheme.onSurface
                         }
                     ) {
@@ -75,7 +74,7 @@ fun WeekView(
                         }
                     }
 
-                    // 2. INDICATOR DOTS (Matching MonthView style)
+                    // Indicator Dots logic remains the same
                     if (hasAppointment && !isPastDate) {
                         Box(
                             modifier = Modifier
