@@ -27,6 +27,7 @@ fun WeekView(
     onDateSelected: (LocalDate) -> Unit,
     onTaskClick: (Task) -> Unit
 ) {
+    val today = LocalDate.now() // Reference for disabling past days
     val startOfWeek = uiState.selectedDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
     val weekDays = (0..6).map { startOfWeek.plusDays(it.toLong()) }
     val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a")
@@ -41,27 +42,53 @@ fun WeekView(
         ) {
             weekDays.forEach { date ->
                 val isSelected = date == uiState.selectedDate
-                val dayName = date.dayOfWeek.name.take(1) // "M", "T", etc.
+                val isPastDate = date.isBefore(today) // Check if past
+                val hasAppointment = uiState.allAppointmentDates.contains(date) // Check for dots
+                val dayName = date.dayOfWeek.name.take(1)
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable { onDateSelected(date) }
+                    modifier = Modifier.clickable(enabled = !isPastDate) { onDateSelected(date) } // Disable click
                 ) {
                     Text(
                         text = dayName,
                         style = MaterialTheme.typography.labelMedium,
-                        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray
+                        color = when {
+                            isSelected -> MaterialTheme.colorScheme.primary
+                            isPastDate -> Color.LightGray.copy(alpha = 0.5f) // Gray out past
+                            else -> Color.Gray
+                        }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Surface(
                         modifier = Modifier.size(36.dp),
                         shape = CircleShape,
                         color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                        contentColor = when {
+                            isSelected -> MaterialTheme.colorScheme.onPrimary
+                            isPastDate -> Color.LightGray.copy(alpha = 0.5f) // Gray out past
+                            else -> MaterialTheme.colorScheme.onSurface
+                        }
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(text = date.dayOfMonth.toString(), fontWeight = FontWeight.Normal)
                         }
+                    }
+
+                    // 2. INDICATOR DOTS (Matching MonthView style)
+                    if (hasAppointment && !isPastDate) {
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 4.dp)
+                                .size(4.dp)
+                                .background(
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.secondary,
+                                    shape = CircleShape
+                                )
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
@@ -69,7 +96,7 @@ fun WeekView(
 
         Divider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp)
 
-        // 2. Weekly Agenda List
+        // 3. Weekly Agenda List
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
@@ -94,28 +121,54 @@ fun WeekView(
 }
 
 @Composable
-fun WeekTaskItem(task: Task, formatter: DateTimeFormatter, onClick: (Task) -> Unit) {
-    val dateFormatter = DateTimeFormatter.ofPattern("EEE")
+fun WeekTaskItem(
+    task: com.kd.classmate.data.Task,
+    formatter: java.time.format.DateTimeFormatter,
+    onClick: (com.kd.classmate.data.Task) -> Unit
+) {
+    val dateFormatter = java.time.format.DateTimeFormatter.ofPattern("EEE")
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { onClick(task) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp)
+            .clickable { onClick(task) },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        )
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Date Column (Left)
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(task.dueDate?.format(dateFormatter) ?: "", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text(task.dueDate?.dayOfMonth.toString(), fontSize = 16.sp)
+                Text(
+                    text = task.dueDate?.format(dateFormatter) ?: "",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = task.dueDate?.dayOfMonth.toString(),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
             }
+
             Spacer(modifier = Modifier.width(16.dp))
+
+            // Task Info Column (Right)
             Column {
-                Text(task.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    text = task.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
                 Text(
                     text = task.dueTime?.format(formatter) ?: "",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
