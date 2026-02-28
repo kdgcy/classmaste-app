@@ -6,9 +6,8 @@ object Routes {
     const val calendar = "calendar"
     const val pomodoro = "pomodoro"
     const val about = "about"
-    val appsettings = "appsettings"
 
-    // Full Screen / Auth Destinations
+    // Full Screen
     const val splash = "splash"
     const val onboarding = "onboarding"
     const val settings = "settings"

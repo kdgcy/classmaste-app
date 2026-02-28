@@ -94,11 +94,6 @@ fun Pomodoro(navController: NavController) {
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Focus Session") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(imageVector = Icons.Filled.ArrowBackIosNew, contentDescription = null)
-                    }
-                },
                 actions = {
                     IconButton(onClick = { viewModel.setSettingsDialogVisibility(true) }) {
                         Icon(imageVector = Icons.Filled.Settings,contentDescription = null)

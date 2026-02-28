@@ -45,12 +45,7 @@ fun AppSettings(navController: NavController) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Settings") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(imageVector = Icons.Filled.ArrowBackIosNew,contentDescription = null)
-                    }
-                }
+                title = { Text("Settings") }
             )
         }
     ) {paddingValues ->

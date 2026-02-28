@@ -135,6 +135,7 @@ fun Home(rootNavController: NavController) {
                 Pomodoro(navController = navController)
             }
 
+            //App Settings
             composable(
                 route = Routes.settings,
                 enterTransition = {
@@ -145,6 +146,19 @@ fun Home(rootNavController: NavController) {
                 }
             ) {
                 AppSettings(navController = navController)
+            }
+
+            //About App Page
+            composable(
+                route = Routes.about,
+                enterTransition = {
+                    slideIntoContainer(getTransitionDirection(initialState, targetState), tween(400)) + fadeIn()
+                },
+                exitTransition = {
+                    slideOutOfContainer(getTransitionDirection(initialState, targetState), tween(400)) + fadeOut()
+                }
+            ) {
+                AboutApp(navController = navController)
             }
 
             // --- TASK DETAIL WITH SLIDE ANIMATION ---

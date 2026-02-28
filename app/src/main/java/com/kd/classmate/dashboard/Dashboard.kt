@@ -84,10 +84,7 @@ fun Dashboard(navController: NavController) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Dashboard") },
-                actions = {
-                    DashboardMenu(navController)
-                }
+                title = { Text("Dashboard") }
             )
         },
         floatingActionButton = {

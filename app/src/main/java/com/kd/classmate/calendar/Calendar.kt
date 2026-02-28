@@ -73,11 +73,6 @@ fun Calendar(navController: NavController) {
             Column {
                 CenterAlignedTopAppBar(
                     title = { Text(text = "Schedule") },
-                    navigationIcon = {
-                        IconButton(onClick = { navController.navigateUp() }) {
-                            Icon(Icons.Filled.ArrowBackIosNew, contentDescription = null)
-                        }
-                    },
                     actions = {
                         IconButton(onClick = { viewModel.setAppointmentDialogVisibility(true) }) {
                             Icon(Icons.Filled.Add, contentDescription = null)
