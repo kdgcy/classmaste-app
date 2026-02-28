@@ -1,15 +1,18 @@
 package com.kd.classmate.utils
 
 object Routes {
-    val dashboard = "dashboard"
-    val calendar = "calendar"
-    val pomodoro = "pomodoro"
-    val appsettings = "appSettings"
-    val splash = "splash"
-    val about = "about"
-    val onboarding = "onboarding"
-    val taskDetails = "taskDetails/{taskId}"
+    // Bottom Bar Destinations
+    const val dashboard = "dashboard"
+    const val calendar = "calendar"
+    const val pomodoro = "pomodoro"
+    const val about = "about"
+    val appsettings = "appsettings"
 
-    // Helper function to create the actual path with the task ID
-    fun taskDetailsPath(taskId: Int) = "taskDetails/$taskId"
+    // Full Screen / Auth Destinations
+    const val splash = "splash"
+    const val onboarding = "onboarding"
+    const val settings = "settings"
+
+    // Sub-screens (if any)
+    const val taskDetail = "taskDetail/{taskId}"
 }

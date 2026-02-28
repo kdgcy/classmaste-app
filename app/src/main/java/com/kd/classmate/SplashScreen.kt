@@ -42,10 +42,12 @@ fun SplashScreen(navController: NavController) {
         delay(3000)
 
         val isFirstLaunch = preferenceManager.getIsFirstLaunch().value
-        val destination = if (isFirstLaunch) Routes.onboarding else Routes.dashboard //
+
+        // FIX: Navigate to "main_home" instead of "dashboard"
+        val destination = if (isFirstLaunch) Routes.onboarding else "main_home"
 
         navController.navigate(destination) {
-            popUpTo(Routes.splash) { inclusive = true } //
+            popUpTo(Routes.splash) { inclusive = true }
         }
     }
 

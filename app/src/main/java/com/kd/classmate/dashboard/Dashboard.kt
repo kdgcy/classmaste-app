@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material3.Card
@@ -26,7 +25,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -145,16 +143,14 @@ fun Dashboard(navController: NavController) {
                 items(uiState.taskList, key = { it.id }) { task ->
                     Box {
                         Card(
-                            shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .combinedClickable(
                                     onClick = {
-                                        navController.navigate(Routes.taskDetailsPath(task.id))
+                                        // FIX: Build the string path manually
+                                        navController.navigate("taskDetail/${task.id}")
                                     },
-                                    onLongClick = {
-                                        viewModel.setTaskInContext(task)
-                                    }
+                                    onLongClick = { viewModel.setTaskInContext(task) }
                                 )
                         ) {
                             Row(
