@@ -119,7 +119,7 @@ fun Pomodoro(navController: NavController) {
             // Placeholder for top alignment
             Box(modifier = Modifier.height(20.dp))
 
-            // 🌟 Main Centering Container: This Box takes all remaining vertical space (weight 1f) and centers its content 🌟
+            // Main Centering Container: This Box takes all remaining vertical space (weight 1f) and centers its content 🌟
             Box(
                 modifier = Modifier
                     .weight(1f)

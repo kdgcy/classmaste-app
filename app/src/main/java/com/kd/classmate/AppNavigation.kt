@@ -16,10 +16,7 @@ fun AppNavigation() {
         startDestination = Routes.splash
     ) {
         composable(Routes.splash) {
-            // Ensure SplashScreen matches these parameter names
-            SplashScreen(
-                navController = rootNavController
-            )
+            SplashScreen( navController = rootNavController)
         }
 
         composable(Routes.onboarding) {
@@ -31,7 +28,6 @@ fun AppNavigation() {
         }
 
         composable("main_home") {
-            // FIXED: Passed rootNavController to Home
             Home(rootNavController = rootNavController)
         }
     }
