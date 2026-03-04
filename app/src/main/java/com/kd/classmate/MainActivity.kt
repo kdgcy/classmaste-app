@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        createNotificationChannel()
         requestNotificationPermission()
 
         setContent {
@@ -69,6 +69,20 @@ class MainActivity : ComponentActivity() {
                     1001 // Request code
                 )
             }
+        }
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = android.app.NotificationChannel(
+                "calendar_channel", // THIS ID MUST MATCH YOUR RECEIVER
+                "Calendar Reminders",
+                android.app.NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifications for your scheduled appointments"
+            }
+            val manager = getSystemService(android.app.NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
         }
     }
 }
