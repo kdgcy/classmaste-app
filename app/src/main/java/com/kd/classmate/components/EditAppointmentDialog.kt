@@ -8,17 +8,24 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -30,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.kd.classmate.data.Task
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -38,28 +46,27 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun EditAppointmentDialog(
     currentAppointment: Task,
-    currentTime: LocalTime, // Edited time from ViewModel
-    title: String, // Edited title from ViewModel
+    currentTime: LocalTime,
+    title: String,
     isTimePickerVisible: Boolean,
     onTitleChange: (String) -> Unit,
     onTimePickerVisibilityChange: (Boolean) -> Unit,
     onTimeSelected: (LocalTime) -> Unit,
     onSave: () -> Unit,
-    onDelete: () -> Unit, // Delete handler
+    onDelete: () -> Unit,
     onCancel: () -> Unit
 ) {
-    val isSaveButtonEnabled = title.isNotBlank()
     val timeFormatter = DateTimeFormatter.ofPattern("h:mma")
     val dateFormatter = DateTimeFormatter.ofPattern("EEE, MMM d, yyyy")
 
-    // --- Time Picker Dialog ---
+    // --- Reuse your Time Picker logic here ---
     if (isTimePickerVisible) {
         val timePickerState = rememberTimePickerState(
             initialHour = currentTime.hour,
             initialMinute = currentTime.minute
         )
         TimePickerDialog(
-            title = { Text(text = "Select Appointment Time") },
+            title = { Text(text = "Update Appointment Time") },
             onDismissRequest = { onTimePickerVisibilityChange(false) },
             confirmButton = {
                 TextButton(
@@ -78,74 +85,93 @@ fun EditAppointmentDialog(
         }
     }
 
-    // --- Appointment Dialog ---
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text("Edit Appointment") },
-        text = {
-            Column(horizontalAlignment = Alignment.Start) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                ) {
-                    Icon(Icons.Filled.CalendarMonth, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-                    Text(
-                        text = currentAppointment.dueDate?.format(dateFormatter) ?: "Date Not Set",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .padding(24.dp)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(28.dp), // Matched to NewAppointmentDialog
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Edit Appointment",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
 
-                // Title Input
+                // 1. STYLED TITLE INPUT
                 OutlinedTextField(
                     value = title,
                     onValueChange = onTitleChange,
-                    label = { Text("Title") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    label = { Text("Appointment Title") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
                 )
-                Spacer(modifier = Modifier.height(16.dp))
 
-                // Time Input Button
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onTimePickerVisibilityChange(true) }
+                // 2. CONTEXTUAL INFO (DATE & TIME)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Filled.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.padding(horizontal = 12.dp))
-                        Text(
-                            text = currentTime.format(timeFormatter),
-                            style = MaterialTheme.typography.bodyLarge
+                    // Date Display Chip
+                    AssistChip(
+                        onClick = { /* Fixed date for editing current item */ },
+                        label = { Text(currentAppointment.dueDate?.format(dateFormatter) ?: "Date Not Set") },
+                        leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null) }
+                    )
+
+                    // Time Selection Chip - Matches NewAppointmentDialog style
+                    AssistChip(
+                        onClick = { onTimePickerVisibilityChange(true) },
+                        label = { Text(currentTime.format(timeFormatter)) },
+                        leadingIcon = { Icon(Icons.Default.Schedule, contentDescription = null) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            labelColor = MaterialTheme.colorScheme.primary
                         )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // 3. ACTION BUTTONS
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Left Side: Delete Action
+                    IconButton(onClick = onDelete) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    // Right Side: Cancel & Save
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = onCancel) {
+                            Text("Cancel")
+                        }
+                        Button(
+                            onClick = onSave,
+                            enabled = title.isNotBlank(),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("Save Changes")
+                        }
                     }
                 }
             }
-        },
-        confirmButton = {
-            Button(
-                onClick = onSave,
-                enabled = isSaveButtonEnabled
-            ) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = onDelete,
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text("Delete", color = Color.White)
-                }
-                TextButton(onClick = onCancel) {
-                    Text("Cancel")
-                }
-            }
         }
-    )
+    }
 }

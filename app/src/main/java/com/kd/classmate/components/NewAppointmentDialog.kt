@@ -1,35 +1,43 @@
 package com.kd.classmate.components
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.TimePickerDialog
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+
+import com.kd.classmate.components.DateTimePickerDialogs
+
+import androidx.compose.material3.rememberDatePickerState
+
+import androidx.compose.material3.rememberTimePickerState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,99 +50,101 @@ fun NewAppointmentDialog(
     onTimePickerVisibilityChange: (Boolean) -> Unit,
     onTimeSelected: (LocalTime) -> Unit,
     onSave: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    isDatePickerVisible: Boolean = false,
+    onDatePickerVisibilityChange: (Boolean) -> Unit = {},
+    onDateSelected: (LocalDate) -> Unit = {}
 ) {
-    val isSaveButtonEnabled = title.isNotBlank()
-    val timeFormatter = DateTimeFormatter.ofPattern("h:mma")
-    val dateFormatter = DateTimeFormatter.ofPattern("EEE, MMM d, yyyy")
-
-    // --- Time Picker Dialog ---
     if (isTimePickerVisible) {
-        val timePickerState = rememberTimePickerState(
-            initialHour = currentTime.hour,
-            initialMinute = currentTime.minute
+        // You likely have a helper for this, or use the standard Material3 TimePickerDialog
+        // If you use your shared component:
+        DateTimePickerDialogs(
+            isDatePickerVisible = isDatePickerVisible,
+            isTimePickerVisible = isTimePickerVisible,
+            onDatePickerVisibilityChange = onDatePickerVisibilityChange,
+            onTimePickerVisibilityChange = onTimePickerVisibilityChange,
+            onDateSelected = onDateSelected,
+            onTimeSelected = onTimeSelected,
+            initialDate = selectedDate
         )
-        TimePickerDialog(
-            title = { Text(text = "Select Appointment Time") },
-            onDismissRequest = { onTimePickerVisibilityChange(false) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
-                        onTimeSelected(selectedTime)
-                        onTimePickerVisibilityChange(false)
-                    }
-                ) { Text("OK") }
-            },
-            dismissButton = {
-                TextButton(onClick = { onTimePickerVisibilityChange(false) }) { Text("Cancel") }
-            }
-        ) {
-            TimePicker(state = timePickerState)
-        }
     }
-
-    // --- Appointment Dialog ---
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text("New Appointment") },
-        text = {
-            Column(horizontalAlignment = Alignment.Start) {
-                // Display Date
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                ) {
-                    Icon(Icons.Filled.CalendarMonth, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-                    Text(
-                        text = selectedDate.format(dateFormatter),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+        properties = DialogProperties(usePlatformDefaultWidth = false) // Allows custom width
+    ) {
+        Surface(
+            modifier = Modifier
+                .padding(24.dp)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(28.dp), // Modern extra-rounded corners
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "New Appointment",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
 
-                // Title Input
+                // 1. STYLED TITLE INPUT
                 OutlinedTextField(
                     value = title,
                     onValueChange = onTitleChange,
-                    label = { Text("Title") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    label = { Text("Task or Event Name") },
+                    placeholder = { Text("e.g., Capstone Meeting") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
                 )
-                Spacer(modifier = Modifier.height(16.dp))
 
-                // Time Input Button
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onTimePickerVisibilityChange(true) }
+                // 2. CONTEXTUAL INFO (DATE & TIME)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Filled.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.padding(horizontal = 12.dp))
-                        Text(
-                            text = currentTime.format(timeFormatter),
-                            style = MaterialTheme.typography.bodyLarge
+                    // Date Display (Read-only)
+                    AssistChip(
+                        onClick = { onDatePickerVisibilityChange(true) },
+                        label = { Text(selectedDate.format(DateTimeFormatter.ofPattern("MMM d, yyyy"))) },
+                        leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null) }
+                    )
+
+                    // Time Selection Chip
+                    AssistChip(
+                        onClick = { onTimePickerVisibilityChange(true) },
+                        label = { Text(currentTime.format(DateTimeFormatter.ofPattern("h:mma"))) },
+                        leadingIcon = { Icon(Icons.Default.AccessTime, contentDescription = null) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            labelColor = MaterialTheme.colorScheme.primary
                         )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // 3. ACTION BUTTONS
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onCancel) {
+                        Text("Cancel")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = onSave,
+                        enabled = title.isNotBlank(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Save Schedule")
                     }
                 }
             }
-        },
-        confirmButton = {
-            Button(
-                onClick = onSave,
-                enabled = isSaveButtonEnabled
-            ) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancel) {
-                Text("Cancel")
-            }
         }
-    )
+    }
 }
