@@ -74,7 +74,6 @@ fun Dashboard(navController: NavController) {
             selectedDate = uiState.selectedDate,
             selectedTime = uiState.selectedTime,
             isDatePickerVisible = uiState.isDatePickerVisible,
-            isTimePickerVisible = uiState.isTimePickerVisible,
             onDatePickerVisibilityChange = viewModel::setDatePickerVisibility,
             onTimePickerVisibilityChange = viewModel::setTimePickerVisibility,
             onDateSelected = viewModel::updateSelectedDate,
