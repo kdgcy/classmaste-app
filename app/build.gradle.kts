@@ -82,4 +82,7 @@ dependencies {
     implementation("io.insert-koin:koin-core")
     implementation("io.insert-koin:koin-android")
     implementation("io.insert-koin:koin-androidx-compose")
+
+    //Media Style
+    implementation("androidx.media:media:1.7.0")
 }

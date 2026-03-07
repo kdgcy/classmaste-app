@@ -1,7 +1,6 @@
 package com.kd.classmate.services
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
@@ -43,6 +42,8 @@ data class ServiceTimerState(
     val workCyclesCompleted: Int = 0
 )
 
+private const val ACTION_STOP_TIMER = "com.kd.classmate.ACTION_STOP_TIMER" // Stop timer
+private const val ACTION_TOGGLE_TIMER = "com.kd.classmate.ACTION_TOGGLE_TIMER"
 class TimerService : LifecycleService(), KoinComponent {
 
     private val _timerState = MutableStateFlow(ServiceTimerState())
@@ -60,7 +61,7 @@ class TimerService : LifecycleService(), KoinComponent {
         fun getService(): TimerService = this@TimerService
     }
 
-    // --- 🌟 NEW: Settings Update Function 🌟
+    // Settings Update Function
     fun updateSettings(work: Long, shortBreak: Long, longBreak: Long) {
         _currentSettings.update {
             it.copy(
@@ -92,8 +93,34 @@ class TimerService : LifecycleService(), KoinComponent {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        startForeground(NOTIFICATION_ID, buildForegroundNotification())
+
+        when (intent?.action) {
+            ACTION_STOP_TIMER -> {
+                handleStopAction() // New helper function to clean up
+            }
+            ACTION_TOGGLE_TIMER -> {
+                toggleTimer()
+                // If toggling results in the timer running, update notification
+                startForeground(NOTIFICATION_ID, buildForegroundNotification())
+            }
+        }
         return START_STICKY
+    }
+
+    private fun handleStopAction() {
+        // 1. Reset the logic state
+        resetTimer(shouldStart = false)
+
+        // 2. Stop the foreground status and remove notification
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
+
+        // 3. Optional: Stop the service entirely if you want it to disappear from RAM
+        stopSelf()
     }
 
     override fun onDestroy() {
@@ -105,7 +132,7 @@ class TimerService : LifecycleService(), KoinComponent {
     // --- Core Timer Logic ---
     private fun startTimer() {
         timerJob?.cancel()
-        wakeLockManager.acquireWakeLock()
+        wakeLockManager.acquireWakeLock() // Keep CPU awake
 
         _timerState.update { it.copy(timerState = TimerState.RUNNING) }
 
@@ -115,9 +142,9 @@ class TimerService : LifecycleService(), KoinComponent {
                 _timerState.update {
                     it.copy(timeRemainingSeconds = it.timeRemainingSeconds - 1)
                 }
-                if (_timerState.value.timeRemainingSeconds % 60 == 0L) {
-                    updateForegroundNotification()
-                }
+
+                // Push notification update every second for a real-time feel
+                updateForegroundNotification()
             }
             handleCycleEnd()
         }
@@ -206,35 +233,62 @@ class TimerService : LifecycleService(), KoinComponent {
     }
 
     // --- Notification Handling ---
-
     private fun buildForegroundNotification(): Notification {
-        val pendingIntent: PendingIntent =
-            Intent(this, MainActivity::class.java).let { notificationIntent ->
-                PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
-            }
+        val contentIntent = PendingIntent.getActivity(
+            this, 0,
+            Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE
+        )
 
-        val channelId = "POMODORO_TIMER_CHANNEL"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Pomodoro Timer",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
-        }
+        // Action 0: Toggle (Pause/Resume)
+        val togglePendingIntent = PendingIntent.getService(
+            this, 2,
+            Intent(this, TimerService::class.java).apply { action = ACTION_TOGGLE_TIMER },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
 
-        // Use Locale for String.format
-        val formattedTime = String.format(Locale.getDefault(), "%02d:%02d", TimeUnit.SECONDS.toMinutes(_timerState.value.timeRemainingSeconds), _timerState.value.timeRemainingSeconds % 60)
+        // Action 1: Stop
+        val stopPendingIntent = PendingIntent.getService(
+            this, 1,
+            Intent(this, TimerService::class.java).apply { action = ACTION_STOP_TIMER },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
 
-        val iconId = android.R.drawable.ic_media_play
+        val state = _timerState.value
+        val isRunning = state.timerState == TimerState.RUNNING
 
-        return NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Focus Session: ${formatCycleText(_timerState.value.cycleState)}")
+        val formattedTime = String.format(
+            Locale.getDefault(), "%02d:%02d",
+            state.timeRemainingSeconds / 60,
+            state.timeRemainingSeconds % 60
+        )
+
+        return NotificationCompat.Builder(this, "POMODORO_TIMER_CHANNEL")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle("${formatCycleText(state.cycleState)} Mode")
             .setContentText("Time remaining: $formattedTime")
-            .setSmallIcon(iconId)
-            .setContentIntent(pendingIntent)
             .setOngoing(true)
+            .setSilent(true)
+            .setOnlyAlertOnce(true)
+            .setContentIntent(contentIntent)
+
+            // ADD ACTIONS
+            .addAction(
+                if (isRunning) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play,
+                if (isRunning) "Pause" else "Resume",
+                togglePendingIntent
+            )
+            .addAction(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                "Stop",
+                stopPendingIntent
+            )
+
+            //  APPLY MEDIA STYLE
+            .setStyle(
+                androidx.media.app.NotificationCompat.MediaStyle()
+                    .setShowActionsInCompactView(0, 1)
+            )
             .build()
     }
 
