@@ -69,12 +69,11 @@ fun Dashboard(navController: NavController) {
             onTitleChange = viewModel::setNewTaskTitleInput,
             onDismiss = { viewModel.setAddDialogVisibility(false) },
             onAddClick = viewModel::addTask,
-
-            // PICKER PARAMETERS
             selectedDate = uiState.selectedDate,
             selectedTime = uiState.selectedTime,
             isDatePickerVisible = uiState.isDatePickerVisible,
             onDatePickerVisibilityChange = viewModel::setDatePickerVisibility,
+            // This parameter now safely toggles the internal 'isSelectingTime' state
             onTimePickerVisibilityChange = viewModel::setTimePickerVisibility,
             onDateSelected = viewModel::updateSelectedDate,
             onTimeSelected = viewModel::updateSelectedTime,

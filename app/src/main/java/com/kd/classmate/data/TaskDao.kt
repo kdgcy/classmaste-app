@@ -1,21 +1,16 @@
 package com.kd.classmate.data
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 import kotlinx.coroutines.flow.Flow
-
-//Task Data Access Object
 
 @Dao
 interface TaskDao {
 
+    // Correct: Flow will automatically emit new lists whenever the table changes
     @Query("SELECT * FROM taskTable ORDER BY id DESC")
     fun getAllTasks(): Flow<List<Task>>
 
+    // Optimization: Standard Insert is fine, but ensure the Long return is used for scheduling
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTask(task: Task): Long
 

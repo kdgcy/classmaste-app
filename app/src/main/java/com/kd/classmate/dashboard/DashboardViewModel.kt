@@ -45,39 +45,29 @@ class DashboardViewModel(
 
 
 
-    val uiState: StateFlow<DashboardUiState> = repository.getAllTasks()
-        .map { allTasks ->
-            val dashboardTasks = allTasks.filter { task ->
-                task.type == TaskType.TASK
-            }
-            DashboardUiState(taskList = dashboardTasks)
-        }
-        .combine(_isAddDialogVisible) { uiState, isVisible ->
-            uiState.copy(isAddDialogVisible = isVisible)
-        }
-        .combine(_newTaskTitleInput) { uiState, input ->
-            uiState.copy(newTaskTitleInput = input)
-        }
-        .combine(_selectedDate) { uiState, date ->
-            uiState.copy(selectedDate = date)
-        }
-        .combine(_selectedTime) { uiState, time ->
-            uiState.copy(selectedTime = time)
-        }
-        .combine(_isDatePickerVisible) { uiState, isVisible ->
-            uiState.copy(isDatePickerVisible = isVisible)
-        }
-        .combine(_isTimePickerVisible) { uiState, isVisible ->
-            uiState.copy(isTimePickerVisible = isVisible)
-        }
-        .combine(_taskInContext) { uiState, task ->
-            uiState.copy(taskInContext = task)
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = DashboardUiState()
+    val uiState: StateFlow<DashboardUiState> = combine(
+        repository.getAllTasks(),
+        _isAddDialogVisible,
+        _newTaskTitleInput,
+        _selectedDate,
+        _selectedTime,
+        _isDatePickerVisible,
+        _taskInContext
+    ) { flows ->
+        DashboardUiState(
+            taskList = (flows[0] as List<Task>).filter { it.type == TaskType.TASK },
+            isAddDialogVisible = flows[1] as Boolean,
+            newTaskTitleInput = flows[2] as String,
+            selectedDate = flows[3] as LocalDate?,
+            selectedTime = flows[4] as LocalTime?,
+            isDatePickerVisible = flows[5] as Boolean,
+            taskInContext = flows[6] as Task?
         )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly, // 🌟 Stops the "Not Responding" freeze
+        initialValue = DashboardUiState()
+    )
 
     // ---  Context Menu Functions ---
 
@@ -97,12 +87,6 @@ class DashboardViewModel(
 
     fun updateSelectedDate(date: LocalDate) {
         _selectedDate.value = date
-        if (_selectedTime.value == null) {
-            viewModelScope.launch {
-                delay(300L)
-                setTimePickerVisibility(true)
-            }
-        }
     }
 
     fun updateSelectedTime(time: LocalTime) {
