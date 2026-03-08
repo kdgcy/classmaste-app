@@ -17,6 +17,7 @@ import java.time.LocalTime
 import kotlinx.coroutines.delay
 import com.kd.classmate.services.NotificationScheduler
 
+
 // Define the UI state
 data class DashboardUiState(
     val taskList: List<Task> = emptyList(),
@@ -42,6 +43,7 @@ class DashboardViewModel(
     private val _isDatePickerVisible = MutableStateFlow(false)
     private val _isTimePickerVisible = MutableStateFlow(false)
     private val _taskInContext = MutableStateFlow<Task?>(null)
+    private var recentlyDeletedTask: Task? = null
 
 
 
@@ -148,9 +150,22 @@ class DashboardViewModel(
     // DELETE (D) (REMAINS)
     fun deleteTask(task: Task) {
         viewModelScope.launch {
-            // Cancel the notification before deleting the task
+            recentlyDeletedTask = task // Store it first
             notificationScheduler.cancel(task.id)
             repository.deleteTask(task)
+        }
+    }
+
+    fun undoDelete() {
+        recentlyDeletedTask?.let { task ->
+            viewModelScope.launch {
+                repository.insertTask(task)
+                // Re-schedule notification if it had a deadline
+                if (task.dueDate != null && task.dueTime != null) {
+                    notificationScheduler.schedule(task)
+                }
+                recentlyDeletedTask = null // Clear it
+            }
         }
     }
 }

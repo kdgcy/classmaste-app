@@ -1,5 +1,3 @@
-// File: AddTaskDialog.kt (UPDATED WITH COMBINED PICKER)
-
 package com.kd.classmate.components
 
 import androidx.compose.animation.AnimatedContent
@@ -61,8 +59,6 @@ fun AddTaskDialog(
     val isAddButtonEnabled = taskTitle.isNotBlank()
     var isSelectingTime by remember { mutableStateOf(false) }
 
-    // 🌟 FIX 1: Use rememberDatePickerState and rememberTimePickerState with stable initial values
-    // We only initialize these once. Updates from the ViewModel won't reset them mid-scroll.
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = remember(isDatePickerVisible) {
             selectedDate?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
@@ -83,7 +79,6 @@ fun AddTaskDialog(
             }
         ) {
             Column(modifier = Modifier.padding(16.dp).padding(bottom = 32.dp)) {
-                // 🌟 FIX 2: Use a key with AnimatedContent to prevent layout thrashing during transition
                 AnimatedContent(
                     targetState = isSelectingTime,
                     label = "PickerTransition"
@@ -115,7 +110,6 @@ fun AddTaskDialog(
                     headlineContent = { Text("Time") },
                     leadingContent = { Icon(Icons.Default.Schedule, null) },
                     trailingContent = {
-                        // 🌟 FIX 3: Local display logic to avoid flickering
                         val displayTime = if (isSelectingTime) {
                             String.format("%02d:%02d", timePickerState.hour, timePickerState.minute)
                         } else {
@@ -135,7 +129,6 @@ fun AddTaskDialog(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = { onDatePickerVisibilityChange(false) }) { Text("CANCEL") }
                     Button(onClick = {
-                        // 🌟 FINAL SYNC: Push all data to ViewModel only once
                         datePickerState.selectedDateMillis?.let { millis ->
                             onDateSelected(Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate())
                         }
