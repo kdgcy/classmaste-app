@@ -40,7 +40,6 @@ import com.kd.classmate.appsetting.SettingsGroup
 
 // App Metadata
 private const val APP_VERSION = "1.0.0"
-private const val DEVELOPER_NAME = "KD"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -168,7 +167,7 @@ fun AboutApp(navController: NavController) {
                 }
 
                 Text(
-                    text = "© 2025 ClassMate.",
+                    text = "© 2026 ClassMate.",
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.padding(top = 24.dp),
                     color = MaterialTheme.colorScheme.outline

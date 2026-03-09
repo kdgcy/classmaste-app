@@ -1,28 +1,56 @@
 package com.kd.classmate.dashboard
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background // ADDED
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete // ADDED
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ListAlt
-import androidx.compose.material3.* // Updated for SwipeToDismissBox
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color // ADDED
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.kd.classmate.components.AddTaskDialog
-import com.kd.classmate.data.Task
-import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.LocalTime
@@ -46,8 +74,8 @@ fun Dashboard(navController: NavController) {
     val uiState = viewModel.uiState.collectAsState().value
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
+    // --- ADD TASK DIALOG ---
     if (uiState.isAddDialogVisible) {
         AddTaskDialog(
             taskTitle = uiState.newTaskTitleInput,
@@ -64,12 +92,32 @@ fun Dashboard(navController: NavController) {
         )
     }
 
+    // --- DELETE CONFIRMATION DIALOG ---
+    if (uiState.taskToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.setTaskToDelete(null) },
+            title = { Text("Delete Task") },
+            text = { Text("Are you sure you want to delete \"${uiState.taskToDelete?.title}\"?") },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.confirmDelete() },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.setTaskToDelete(null) }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Dashboard") }
-            )
+            CenterAlignedTopAppBar(title = { Text("Dashboard") })
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -85,9 +133,7 @@ fun Dashboard(navController: NavController) {
     ) { paddingValues ->
 
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -105,134 +151,91 @@ fun Dashboard(navController: NavController) {
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "No tasks yet!",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            text = "Tap '+' to add your first to-do.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
+                        Text("No tasks yet!", style = MaterialTheme.typography.titleMedium)
+                        Text("Tap '+' to add your first to-do.", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             } else {
+                // 🌟 FIX: Ensure all task-specific logic is INSIDE the items block
                 items(uiState.taskList, key = { it.id }) { task ->
+
                     val dismissState = rememberSwipeToDismissBoxState(
                         confirmValueChange = { value ->
                             if (value == SwipeToDismissBoxValue.EndToStart) {
-                                // 1. Delete from database and cancel alarm
-                                viewModel.deleteTask(task)
-
-                                // 2. Launch Snackbar in a background scope
-                                scope.launch {
-                                    val result = snackbarHostState.showSnackbar(
-                                        message = "Task deleted",
-                                        actionLabel = "Undo",
-                                        duration = SnackbarDuration.Short
-                                    )
-
-                                    // 3. If "Undo" is clicked, restore the task
-                                    if (result == SnackbarResult.ActionPerformed) {
-                                        viewModel.undoDelete()
-                                    }
-                                }
-                                true
-                            } else {
-                                false
-                            }
+                                viewModel.setTaskToDelete(task)
+                                false // 🌟 Keep item in list until confirmed
+                            } else false
                         }
                     )
 
-                    LaunchedEffect(task) {
-                        if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+                    // 🌟 RESET SWIPE: Slides the red background back if dialog is cancelled
+                    LaunchedEffect(uiState.taskToDelete) {
+                        if (uiState.taskToDelete == null && dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
                             dismissState.snapTo(SwipeToDismissBoxValue.Settled)
                         }
                     }
 
-
-                    SwipeToDismissBox(
-                        state = dismissState,
-                        enableDismissFromStartToEnd = false,
-                        backgroundContent = {
-                            val color = when (dismissState.targetValue) {
-                                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                                else -> Color.Transparent
+                    Box(modifier = Modifier.animateItem()) {
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            enableDismissFromStartToEnd = false,
+                            backgroundContent = {
+                                val color = when (dismissState.targetValue) {
+                                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                                    else -> Color.Transparent
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(color, RoundedCornerShape(12.dp))
+                                        .padding(horizontal = 20.dp),
+                                    contentAlignment = Alignment.CenterEnd
+                                ) {
+                                    Icon(Icons.Filled.Delete, "Delete", tint = MaterialTheme.colorScheme.error)
+                                }
                             }
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(color, RoundedCornerShape(12.dp))
-                                    .padding(horizontal = 20.dp),
-                                contentAlignment = Alignment.CenterEnd
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Delete,
-                                    contentDescription = "Delete",
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        }
-                    ) {
-                        // Your existing Task Card content
-                        Box {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("taskDetail/${task.id}")
-                                        },
-                                        onLongClick = { viewModel.setTaskInContext(task) }
-                                    )
-                            ) {
-                                Row(
+                        ) {
+                            Box {
+                                Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = task.title,
-                                            textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold
+                                        .combinedClickable(
+                                            onClick = { navController.navigate("taskDetail/${task.id}") },
+                                            onLongClick = { viewModel.setTaskInContext(task) }
                                         )
-
-                                        if (!task.isCompleted) {
-                                            Row(
-                                                modifier = Modifier.padding(top = 4.dp),
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                            ) {
-                                                Text(
-                                                    text = formatDueDate(task.dueDate),
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                                Text(
-                                                    text = " | ",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                                Text(
-                                                    text = formatDueTime(task.dueTime),
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = task.title,
+                                                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            if (!task.isCompleted) {
+                                                Row(
+                                                    modifier = Modifier.padding(top = 4.dp),
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    Text(formatDueDate(task.dueDate), style = MaterialTheme.typography.bodySmall)
+                                                    Text(" | ", style = MaterialTheme.typography.bodySmall)
+                                                    Text(formatDueTime(task.dueTime), style = MaterialTheme.typography.bodySmall)
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
 
-                            if (uiState.taskInContext == task) {
-                                TaskContextMenu(
-                                    task = task,
-                                    onDismiss = { viewModel.setTaskInContext(null) },
-                                    onToggleCompletion = viewModel::updateTaskCompletion
-                                )
+                                if (uiState.taskInContext == task) {
+                                    TaskContextMenu(
+                                        task = task,
+                                        onDismiss = { viewModel.setTaskInContext(null) },
+                                        onToggleCompletion = viewModel::updateTaskCompletion
+                                    )
+                                }
                             }
                         }
                     }
