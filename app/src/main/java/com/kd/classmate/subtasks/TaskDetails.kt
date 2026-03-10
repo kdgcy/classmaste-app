@@ -102,13 +102,13 @@ fun TaskDetails(
 
     // Date/Time Picker Hosting
     DateTimePickerDialogs(
-        isDatePickerVisible = uiState.isDatePickerVisible,
-        isTimePickerVisible = uiState.isTimePickerVisible,
-        onDatePickerVisibilityChange = viewModel::setDatePickerVisibility,
-        onTimePickerVisibilityChange = viewModel::setTimePickerVisibility,
-        onDateSelected = viewModel::updateSelectedDate,
-        onTimeSelected = viewModel::updateSelectedTime,
-        initialDate = uiState.selectedDate
+        isDatePickerVisible = uiState.isSubtaskDatePickerVisible,
+        isTimePickerVisible = uiState.isSubtaskTimePickerVisible,
+        onDatePickerVisibilityChange = viewModel::setSubtaskDatePickerVisibility,
+        onTimePickerVisibilityChange = viewModel::setSubtaskTimePickerVisibility,
+        onDateSelected = viewModel::updateNewSubtaskDate,
+        onTimeSelected = viewModel::updateNewSubtaskTime,
+        initialDate = uiState.newSubtaskDate
     )
 
     // --- DIALOGS HOSTING ---
@@ -136,10 +136,17 @@ fun TaskDetails(
         AddSubtaskDialog(
             subtaskTitle = uiState.newSubtaskTitleInput,
             onTitleChange = viewModel::setNewSubtaskTitleInput,
+            // 🌟 ADD THESE FOUR PARAMETERS
+            selectedDate = uiState.newSubtaskDate,
+            selectedTime = uiState.newSubtaskTime,
+            onDatePickerClick = { viewModel.setSubtaskDatePickerVisibility(true) },
+            onTimePickerClick = { viewModel.setSubtaskTimePickerVisibility(true) },
             onDismiss = { viewModel.setSubtaskAddDialogVisibility(false) },
             onAddClick = viewModel::addSubtask
         )
     }
+
+
 
     // --- EDIT SUBTASK DIALOG ---
     uiState.subtaskBeingEdited?.let { subtask ->

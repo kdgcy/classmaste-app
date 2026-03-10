@@ -38,6 +38,11 @@ data class TaskDetailsUiState(
     val isTimePickerVisible: Boolean = false,
     val selectedDate: LocalDate? = null,
     val selectedTime: LocalTime? = null,
+
+    val newSubtaskDate: LocalDate? = null,
+    val newSubtaskTime: LocalTime? = null,
+    val isSubtaskDatePickerVisible: Boolean = false,
+    val isSubtaskTimePickerVisible: Boolean = false
 )
 
 class TaskDetailsViewModel(
@@ -69,6 +74,13 @@ class TaskDetailsViewModel(
     private val _selectedDate = MutableStateFlow<LocalDate?>(null)
     private val _selectedTime = MutableStateFlow<LocalTime?>(null)
 
+    //Subtasks date and time
+    private val _newSubtaskDate = MutableStateFlow<LocalDate?>(null)
+    private val _newSubtaskTime = MutableStateFlow<LocalTime?>(null)
+
+    private val _isSubtaskDatePickerVisible = MutableStateFlow(false)
+    private val _isSubtaskTimePickerVisible = MutableStateFlow(false)
+
 
     // Combine flows into the public StateFlow
     @Suppress("UNCHECKED_CAST")
@@ -77,8 +89,9 @@ class TaskDetailsViewModel(
             _taskFlow, _isEditDialogVisible, _editTaskTitleInput, _isDeleteConfirmationVisible,
             _subtaskListFlow, _isSubtaskAddDialogVisible, _newSubtaskTitleInput,
             _subtaskBeingEdited, _isSubtaskEditDialogVisible, _editSubtaskTitleInput,
-            // NEW FLOWS COMBINED HERE
-            _isDatePickerVisible, _isTimePickerVisible, _selectedDate, _selectedTime
+            _isDatePickerVisible, _isTimePickerVisible, _selectedDate, _selectedTime,
+            // 🌟 ADDED THESE 4 FLOWS TO THE LIST
+            _newSubtaskDate, _newSubtaskTime, _isSubtaskDatePickerVisible, _isSubtaskTimePickerVisible
         )
     ) { args ->
         TaskDetailsUiState(
@@ -99,7 +112,13 @@ class TaskDetailsViewModel(
             isDatePickerVisible = args[10] as Boolean,
             isTimePickerVisible = args[11] as Boolean,
             selectedDate = args[12] as LocalDate?,
-            selectedTime = args[13] as LocalTime?
+            selectedTime = args[13] as LocalTime?,
+
+            // 🌟 MAPPED THESE 4 NEW STATE VALUES
+            newSubtaskDate = args[14] as LocalDate?,
+            newSubtaskTime = args[15] as LocalTime?,
+            isSubtaskDatePickerVisible = args[16] as Boolean,
+            isSubtaskTimePickerVisible = args[17] as Boolean
         )
     }.stateIn(
         scope = viewModelScope,
@@ -126,6 +145,26 @@ class TaskDetailsViewModel(
                 }
             }
         }
+    }
+
+    fun setSubtaskDatePickerVisibility(visible: Boolean) {
+        _isSubtaskDatePickerVisible.value = visible
+    }
+
+    fun setSubtaskTimePickerVisibility(visible: Boolean) {
+        _isSubtaskTimePickerVisible.value = visible
+    }
+
+    fun updateNewSubtaskDate(date: LocalDate) {
+        _newSubtaskDate.value = date
+        viewModelScope.launch {
+            delay(300L) // Small delay for smooth transition
+            setSubtaskTimePickerVisibility(true)
+        }
+    }
+
+    fun updateNewSubtaskTime(time: LocalTime) {
+        _newSubtaskTime.value = time
     }
 
     // --- NEW: Date/Time Update Functions ---
@@ -227,8 +266,17 @@ class TaskDetailsViewModel(
         val title = _newSubtaskTitleInput.value.trim()
         if (title.isNotEmpty()) {
             viewModelScope.launch {
-                val newSubtask = Subtask(parentTaskId = taskId, title = title)
+                val newSubtask = Subtask(
+                    parentTaskId = taskId,
+                    title = title,
+                    dueDate = _newSubtaskDate.value, // 🌟 Save date
+                    dueTime = _newSubtaskTime.value  // 🌟 Save time
+                )
                 subtaskRepository.insertSubtask(newSubtask)
+
+                // Reset fields
+                _newSubtaskDate.value = null
+                _newSubtaskTime.value = null
                 setSubtaskAddDialogVisibility(false)
             }
         }

@@ -24,7 +24,7 @@ class TaskTypeConverter {
 }
 
 @TypeConverters(Converters::class, TaskTypeConverter::class)
-@Database(entities = [Task::class, Subtask::class], version = 4, exportSchema = false)
+@Database(entities = [Task::class, Subtask::class], version = 5, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun taskDao(): TaskDao
