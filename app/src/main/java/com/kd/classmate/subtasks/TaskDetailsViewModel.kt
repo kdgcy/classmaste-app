@@ -234,14 +234,17 @@ class TaskDetailsViewModel(
         val subtask = _subtaskBeingEdited.value ?: return
         val newTitle = _editSubtaskTitleInput.value.trim()
 
-        if (newTitle.isNotEmpty() && newTitle != subtask.title) {
+        if (newTitle.isNotEmpty()) {
             viewModelScope.launch {
                 val updatedSubtask = subtask.copy(title = newTitle)
                 subtaskRepository.updateSubtask(updatedSubtask)
+
+                // Reschedule with new title
+                if (updatedSubtask.dueDate != null && updatedSubtask.dueTime != null) {
+                    notificationScheduler.schedule(updatedSubtask)
+                }
                 cancelEditSubtask()
             }
-        } else if (newTitle.isNotEmpty()) {
-            cancelEditSubtask()
         }
     }
 
@@ -249,6 +252,7 @@ class TaskDetailsViewModel(
 
     fun deleteSubtask(subtask: Subtask) {
         viewModelScope.launch {
+            notificationScheduler.cancel(subtask.id, isSubtask = true) // Cancel alarm
             subtaskRepository.deleteSubtask(subtask)
         }
     }
@@ -269,12 +273,17 @@ class TaskDetailsViewModel(
                 val newSubtask = Subtask(
                     parentTaskId = taskId,
                     title = title,
-                    dueDate = _newSubtaskDate.value, // 🌟 Save date
-                    dueTime = _newSubtaskTime.value  // 🌟 Save time
+                    dueDate = _newSubtaskDate.value,
+                    dueTime = _newSubtaskTime.value
                 )
-                subtaskRepository.insertSubtask(newSubtask)
+                // Get the generated ID from repository
+                val newId = subtaskRepository.insertSubtask(newSubtask)
 
-                // Reset fields
+                // SCHEDULE NOTIFICATION
+                if (newSubtask.dueDate != null && newSubtask.dueTime != null) {
+                    notificationScheduler.schedule(newSubtask.copy(id = newId.toInt()))
+                }
+
                 _newSubtaskDate.value = null
                 _newSubtaskTime.value = null
                 setSubtaskAddDialogVisibility(false)
@@ -286,6 +295,14 @@ class TaskDetailsViewModel(
         viewModelScope.launch {
             val updatedSubtask = subtask.copy(isCompleted = isCompleted)
             subtaskRepository.updateSubtask(updatedSubtask)
+
+            // If marked as completed, cancel the notification
+            if (isCompleted) {
+                notificationScheduler.cancel(subtask.id, isSubtask = true)
+            } else if (subtask.dueDate != null && subtask.dueTime != null) {
+                // If unchecked, reschedule if there is a date/time
+                notificationScheduler.schedule(updatedSubtask)
+            }
         }
     }
 

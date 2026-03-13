@@ -8,8 +8,8 @@ class SubtaskRepository(private val subtaskDao: SubtaskDao) {
         return subtaskDao.getSubtasksForTask(parentTaskId)
     }
 
-    suspend fun insertSubtask(subtask: Subtask) {
-        subtaskDao.insertSubtask(subtask)
+    suspend fun insertSubtask(subtask: Subtask): Long {
+        return subtaskDao.insertSubtask(subtask)
     }
 
     suspend fun updateSubtask(subtask: Subtask) {

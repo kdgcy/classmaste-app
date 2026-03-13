@@ -15,7 +15,7 @@ interface SubtaskDao {
     fun getSubtasksForTask(parentTaskId: Int): Flow<List<Subtask>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSubtask(subtask: Subtask)
+    suspend fun insertSubtask(subtask: Subtask): Long
 
     @Update
     suspend fun updateSubtask(subtask: Subtask)
