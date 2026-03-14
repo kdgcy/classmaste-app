@@ -38,7 +38,7 @@ class NotificationSchedulerImpl(
         val intent = Intent(context, NotificationReceiver::class.java).apply {
             action = ACTION_REMINDER
             putExtra(EXTRA_TASK_ID, id)
-            putExtra(EXTRA_TASK_TITLE, if (isSubtask) "Step: $title" else title)
+            putExtra(EXTRA_TASK_TITLE, if (isSubtask) "$title" else title)
             component = ComponentName(context, NotificationReceiver::class.java)
         }
 

@@ -98,17 +98,22 @@ fun TaskDetails(
     val currentRevealedId by rememberUpdatedState(currentSwipedItemId)
 
     val (dateText, timeText) = formatSchedule(uiState.selectedDate, uiState.selectedTime)
+    val isEditingSubtask = uiState.isSubtaskEditDialogVisible // 🌟 Helper variable
 
-
-    // Date/Time Picker Hosting
     DateTimePickerDialogs(
         isDatePickerVisible = uiState.isSubtaskDatePickerVisible,
         isTimePickerVisible = uiState.isSubtaskTimePickerVisible,
         onDatePickerVisibilityChange = viewModel::setSubtaskDatePickerVisibility,
         onTimePickerVisibilityChange = viewModel::setSubtaskTimePickerVisibility,
-        onDateSelected = viewModel::updateNewSubtaskDate,
-        onTimeSelected = viewModel::updateNewSubtaskTime,
-        initialDate = uiState.newSubtaskDate
+        onDateSelected = {
+            if (isEditingSubtask) viewModel.updateEditSubtaskDate(it)
+            else viewModel.updateNewSubtaskDate(it)
+        },
+        onTimeSelected = {
+            if (isEditingSubtask) viewModel.updateEditSubtaskTime(it)
+            else viewModel.updateNewSubtaskTime(it)
+        },
+        initialDate = if (isEditingSubtask) uiState.editSubtaskDate else uiState.newSubtaskDate
     )
 
     // --- DIALOGS HOSTING ---
@@ -154,8 +159,12 @@ fun TaskDetails(
             EditSubtaskDialog(
                 currentTitle = uiState.editSubtaskTitleInput,
                 onTitleChange = viewModel::setEditSubtaskTitleInput,
+                selectedDate = uiState.editSubtaskDate,
+                selectedTime = uiState.editSubtaskTime,
+                onDatePickerClick = { viewModel.setSubtaskDatePickerVisibility(true) },
+                onTimePickerClick = { viewModel.setSubtaskTimePickerVisibility(true) },
                 onCancel = viewModel::cancelEditSubtask,
-                onSaveClick = viewModel::saveEditedSubtask,
+                onSaveClick = viewModel::saveEditedSubtask
             )
         }
     }

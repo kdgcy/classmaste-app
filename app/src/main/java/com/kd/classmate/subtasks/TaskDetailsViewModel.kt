@@ -42,7 +42,9 @@ data class TaskDetailsUiState(
     val newSubtaskDate: LocalDate? = null,
     val newSubtaskTime: LocalTime? = null,
     val isSubtaskDatePickerVisible: Boolean = false,
-    val isSubtaskTimePickerVisible: Boolean = false
+    val isSubtaskTimePickerVisible: Boolean = false,
+    val editSubtaskDate: LocalDate? = null,
+    val editSubtaskTime: LocalTime? = null
 )
 
 class TaskDetailsViewModel(
@@ -81,6 +83,9 @@ class TaskDetailsViewModel(
     private val _isSubtaskDatePickerVisible = MutableStateFlow(false)
     private val _isSubtaskTimePickerVisible = MutableStateFlow(false)
 
+    private val _editSubtaskDate = MutableStateFlow<LocalDate?>(null)
+    private val _editSubtaskTime = MutableStateFlow<LocalTime?>(null)
+
 
     // Combine flows into the public StateFlow
     @Suppress("UNCHECKED_CAST")
@@ -90,8 +95,8 @@ class TaskDetailsViewModel(
             _subtaskListFlow, _isSubtaskAddDialogVisible, _newSubtaskTitleInput,
             _subtaskBeingEdited, _isSubtaskEditDialogVisible, _editSubtaskTitleInput,
             _isDatePickerVisible, _isTimePickerVisible, _selectedDate, _selectedTime,
-            // 🌟 ADDED THESE 4 FLOWS TO THE LIST
-            _newSubtaskDate, _newSubtaskTime, _isSubtaskDatePickerVisible, _isSubtaskTimePickerVisible
+            _newSubtaskDate, _newSubtaskTime, _isSubtaskDatePickerVisible, _isSubtaskTimePickerVisible,
+            _editSubtaskDate, _editSubtaskTime
         )
     ) { args ->
         TaskDetailsUiState(
@@ -107,18 +112,16 @@ class TaskDetailsViewModel(
             subtaskBeingEdited = args[7] as Subtask?,
             isSubtaskEditDialogVisible = args[8] as Boolean,
             editSubtaskTitleInput = args[9] as String,
-
-            // State Initialization
             isDatePickerVisible = args[10] as Boolean,
             isTimePickerVisible = args[11] as Boolean,
             selectedDate = args[12] as LocalDate?,
             selectedTime = args[13] as LocalTime?,
-
-            // 🌟 MAPPED THESE 4 NEW STATE VALUES
             newSubtaskDate = args[14] as LocalDate?,
             newSubtaskTime = args[15] as LocalTime?,
             isSubtaskDatePickerVisible = args[16] as Boolean,
-            isSubtaskTimePickerVisible = args[17] as Boolean
+            isSubtaskTimePickerVisible = args[17] as Boolean,
+            editSubtaskDate = args[18] as LocalDate?, // Now safely accessible
+            editSubtaskTime = args[19] as LocalTime?  // Now safely accessible
         )
     }.stateIn(
         scope = viewModelScope,
@@ -217,7 +220,17 @@ class TaskDetailsViewModel(
     fun startEditSubtask(subtask: Subtask) {
         _subtaskBeingEdited.value = subtask
         _editSubtaskTitleInput.value = subtask.title
+        _editSubtaskDate.value = subtask.dueDate   // Populate current date
+        _editSubtaskTime.value = subtask.dueTime
         _isSubtaskEditDialogVisible.value = true
+    }
+
+    fun updateEditSubtaskDate(date: LocalDate) {
+        _editSubtaskDate.value = date
+    }
+
+    fun updateEditSubtaskTime(time: LocalTime) {
+        _editSubtaskTime.value = time
     }
 
     fun cancelEditSubtask() {
@@ -236,12 +249,18 @@ class TaskDetailsViewModel(
 
         if (newTitle.isNotEmpty()) {
             viewModelScope.launch {
-                val updatedSubtask = subtask.copy(title = newTitle)
+                val updatedSubtask = subtask.copy(
+                    title = newTitle,
+                    dueDate = _editSubtaskDate.value,
+                    dueTime = _editSubtaskTime.value
+                )
                 subtaskRepository.updateSubtask(updatedSubtask)
 
-                // Reschedule with new title
+                // Reschedule notification with new date/time/title
                 if (updatedSubtask.dueDate != null && updatedSubtask.dueTime != null) {
                     notificationScheduler.schedule(updatedSubtask)
+                } else {
+                    notificationScheduler.cancel(updatedSubtask.id, isSubtask = true)
                 }
                 cancelEditSubtask()
             }
