@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
         requestNotificationPermission()
 
         setContent {
-            // Collect the theme preference state from the ViewModel
+            // Collect the theme preference state from the ViewModel.
             val settingsState by appSettingsViewModel.uiState.collectAsState()
 
             // Determine whether to use Dark Theme
